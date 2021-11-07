@@ -7,7 +7,7 @@
 
     
 
-    <title>cuda1 | 叶平的博客</title>
+    <title>Tag: c++ | 叶平的博客</title>
     <meta name="author" content="郑叶平" />
     <meta name="keywords" content="" />
     <meta name="description" content="" />
@@ -15,6 +15,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
 
     
+    
+    <link rel="icon" href="/images/zyp.ico">
     
 
     <style type="text/css">
@@ -53,14 +55,22 @@
             </a>
         
             <a class="nav-item" href="/categories/HPC">
-                <span class="nav-text">并行计算</span>
+                <span class="nav-text">HPC</span>
             </a>
         
             <a class="nav-item" href="/categories/cpp">
                 <span class="nav-text">C++</span>
             </a>
         
-            <a class="nav-item" href="/tags">
+            <a class="nav-item" href="/categories/psychology">
+                <span class="nav-text">心理学</span>
+            </a>
+        
+            <a class="nav-item" href="/categories/reading">
+                <span class="nav-text">阅读</span>
+            </a>
+        
+            <a class="nav-item active" href="/tags">
                 <span class="nav-text">标签</span>
             </a>
         
@@ -82,8 +92,6 @@
 
         
         
-        
-        
 
         
         <div class="author-meta">
@@ -98,7 +106,7 @@
             <div class="author-work">高性能计算 点云</div>
             <div class="author-location">
                 <i class="icon-location vm"></i>
-                <span class="vm">大连</span>
+                <span class="vm">辽宁 大连</span>
             </div>
             
             <div class="author-thread-wrap">
@@ -124,59 +132,52 @@
 
         <div id="content" class="content">
             <div id="wrapper" class="wrapper" style="max-width: 800px">
-                <article class="article" itemscope itemprop="blogPost">
-    
-    <header class="article-header">
-        
-        <h1 itemprop="name">
-            cuda1
-        </h1>
-        
-        <div class="article-meta clearfix">
-            <a class="article-date" href="http://wonderzyp.cn/2021/11/07/cuda1-1/index.html">
-    
-    <i class="icon-calendar vm"></i>
-    
-    <time class="vm" datetime="2021-11-07T09:56:14.000Z" itemprop="datePublished">2021-11-07</time>
-</a>
-
-            
-
-        </div>
-    </header>
-    
-    <section class="article-body markdown-body">
-        
-        
-        
-    </section>
-</article>
+                
 
 
-
-<a id="pagenext" href="/2021/11/07/cpp1/" class="article-next" title="cpp1"><i class="icon-arrow-right"></i></a>
-
-
-
-
-<div class="comments">
-    <div id="comments"></div>
-    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
-    <script>
-    new Gitalk({
-        clientID: "cf8c870ff3131463298a",
-        clientSecret: "9ce1a2327180613c3dff8ab819ac9d6b95eb4e7e",
-        repo: "blogtalk",
-        owner: "wonderzyp",
-        admin: ["wonderzyp"],
-        id: "c693f0f889715245085f5352d914259a",
-        distractionFreeMode: true,
-        title: "cuda1",
-        body: "http://wonderzyp.cn/2021/11/07/cuda1-1/",
-        labels: []
-    }).render('comments');
-    </script>
+<div class="page-hd">
+    c++
+    <small>(1)</small>
 </div>
+
+
+
+    
+    
+    
+    
+    
+    <section class="archives-wrap">
+    <div class="archive-year-wrap">
+    <a href="/archives/2021" class="page-hd">
+        2021
+    </a>
+    </div>
+    <ol class="archives">
+    
+
+    <li class="archive-section-item">
+        
+<article class="archive-article archive-type-post">
+    <div class="archive-article-inner">
+        <header class="archive-article-header">
+            <a class="archive-article-link" href="/2021/11/07/cpp%E6%8B%B7%E8%B4%9D%E6%8E%A7%E5%88%B6/">C++学习：拷贝控制</a>
+            <span class="archive-article-date">
+                (<a class="article-date" href="/archives/2021/11">
+    
+    <time class="vm" datetime="2021-11-07T09:20:54.000Z" itemprop="datePublished">11/7</time>
+</a>
+)
+            </span>
+        </header>
+    </div>
+</article>
+    </li>
+
+
+</ol></section>
+
+
 
 
 
@@ -243,33 +244,6 @@
         });
     });
     </script>
-    
-        
-<script src="/js/scrollspy.min.js"></script>
-
-        <script type="text/javascript">
-        $(document.body).scrollspy({target: '#aside-inner'});
-
-        $(window).on('resize', function() {
-            var hw = $('#header').width();
-            var ww = $('#wrapper').width();
-            var space = ($(this).width() - hw - ww) / 2 / 2;
-
-            var pageprev = $('#pageprev');
-            var pagenext = $('#pagenext');
-            var avg = (pageprev.width() + pagenext.width()) / 2
-
-            if(space > avg) {
-                var len = space - avg / 2;
-                var styles = {position: 'fixed', top: '50%', marginTop: - (pageprev.width() + pagenext.width()) / 4}
-                pageprev.css($.extend({left: hw + len}, styles));
-                pagenext.css($.extend({right: len}, styles));
-            } else {
-                pageprev.removeAttr('style');
-                pagenext.removeAttr('style');
-            }
-        }).trigger('resize');
-        </script>
     
 
 </body>

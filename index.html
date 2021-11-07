@@ -1,460 +1,338 @@
-
 <!DOCTYPE html>
-<html lang="en" style="display: none;">
-
-  
+<html lang="zh-CN">
 <head>
-  <script>
-    window.mduiVersion = "1.5.2"
-    window.oldVersion = [
-     '1.5.0',
-     '1.5.1',
-     '1.4.9',
-     'unknownVersion'
-    ]
-  </script>
-  <!--
-        © HEXO MDUI Theme
-        https://github.com/Halyul/hexo-theme-mdui
-        Version: 1.5.2 -->
-  <meta charset="UTF-8">
-  <title>Index - 叶平的博客</title>
-
-  <!-- Favicons -->
-  <link rel="icon shortcut" type="image/ico" href="/img/favicon.png">
-  <link rel="icon" sizes="192x192" href="/img/favicon.png">
-  <link rel="apple-touch-icon" href="/img/favicon.png">
-
-  <!-- Meta & Info -->
-  <meta http-equiv="X-UA-Compatible">
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-
-  
-    <meta name="theme-color" content="
-  
-  #3F51B5
-  
-
-">
-  
-
-  <meta name="author" content="郑叶平">
-  
-  <meta name="keywords" content="blog, hexo, mdui">
-
-  <!--iOS -->
-  <meta name="apple-mobile-web-app-title" content="叶平的博客">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="HandheldFriendly" content="True">
-  <meta name="MobileOptimized" content="480">
-
-  <!-- Add to homescreen for Chrome on Android -->
-  <meta name="mobile-web-app-capable" content="yes">
-
-  <!-- The Open Graph protocol -->
-  <meta property="og:url" content="http://wonderzyp.cn">
-  <meta property="og:type" content="blog">
-  <meta property="og:title" content="Index - 叶平的博客 | 叶平的博客">
-  <meta property="og:image" content="/img/favicon.png" />
-  
+    <meta charset="UTF-8" />
 
     
 
-  <!-- Cache -->
-  <meta http-equiv="Cache-Control" content="max-age=7200" />
-  <meta http-equiv="Expires" content="Fri, 29 Dec 2017 23:00:00 GMT" />
-
-  
-
-  <script>
-    (function(){window.lsloader={jsRunSequence:[],jsnamemap:{},cssnamemap:{}};lsloader.removeLS=function(key){try{localStorage.removeItem(key)}catch(e){}};lsloader.setLS=function(key,val){try{localStorage.setItem(key,val)}catch(e){}};lsloader.getLS=function(key){var val="";try{val=localStorage.getItem(key)}catch(e){val=""}return val};versionString="/*"+(window.mduiVersion||"unknownVersion")+"*/";lsloader.clean=function(){try{var keys=[];for(var i=0;i<localStorage.length;i++){keys.push(localStorage.key(i))}keys.forEach(function(key){var data=lsloader.getLS(key);if(window.oldVersion){var remove=window.oldVersion.reduce(function(p,c){return p||data.indexOf(c)!==-1},false);if(remove){lsloader.removeLS(key)}}})}catch(e){}};lsloader.clean();lsloader.load=function(jsname,jspath,cssonload,isJs){if(typeof cssonload==="boolean"){isJs=cssonload;cssonload=undefined}isJs=isJs||false;cssonload=cssonload||function(){};var code;code=this.getLS(jsname);if(code&&code.indexOf(versionString)===-1){this.removeLS(jsname);this.requestResource(jsname,jspath,cssonload);return}if(code){var versionNumber=code.split(versionString)[0];if(versionNumber!=jspath){console.log("reload:"+jspath);this.removeLS(jsname);this.requestResource(jsname,jspath,cssonload);return}code=code.split(versionString)[1];if(isJs){this.jsRunSequence.push({name:jsname,code:code});this.runjs(jspath,jsname,code)}else{document.getElementById(jsname).appendChild(document.createTextNode(code));cssonload()}}else{this.requestResource(jsname,jspath,cssonload,isJs)}};lsloader.requestResource=function(name,path,cssonload,isJs){var that=this;if(isJs){this.iojs(path,name,function(path,name,code){that.setLS(name,path+versionString+code);that.runjs(path,name,code)})}else{this.iocss(path,name,function(code){document.getElementById(name).appendChild(document.createTextNode(code));that.setLS(name,path+versionString+code)},cssonload)}};lsloader.iojs=function(path,jsname,callback){var that=this;that.jsRunSequence.push({name:jsname,code:""});try{var xhr=new XMLHttpRequest;xhr.open("get",path,true);xhr.onreadystatechange=function(){if(xhr.readyState==4){if(xhr.status>=200&&xhr.status<300||xhr.status==304){if(xhr.response!=""){callback(path,jsname,xhr.response);return}}that.jsfallback(path,jsname)}};xhr.send(null)}catch(e){that.jsfallback(path,jsname)}};lsloader.iocss=function(path,jsname,callback,cssonload){var that=this;try{var xhr=new XMLHttpRequest;xhr.open("get",path,true);xhr.onreadystatechange=function(){if(xhr.readyState==4){if(xhr.status>=200&&xhr.status<300||xhr.status==304){if(xhr.response!=""){callback(xhr.response);cssonload();return}}that.cssfallback(path,jsname,cssonload)}};xhr.send(null)}catch(e){that.cssfallback(path,jsname,cssonload)}};lsloader.iofonts=function(path,jsname,callback,cssonload){var that=this;try{var xhr=new XMLHttpRequest;xhr.open("get",path,true);xhr.onreadystatechange=function(){if(xhr.readyState==4){if(xhr.status>=200&&xhr.status<300||xhr.status==304){if(xhr.response!=""){callback(xhr.response);cssonload();return}}that.cssfallback(path,jsname,cssonload)}};xhr.send(null)}catch(e){that.cssfallback(path,jsname,cssonload)}};lsloader.runjs=function(path,name,code){if(!!name&&!!code){for(var k in this.jsRunSequence){if(this.jsRunSequence[k].name==name){this.jsRunSequence[k].code=code}}}if(!!this.jsRunSequence[0]&&!!this.jsRunSequence[0].code&&this.jsRunSequence[0].status!="failed"){var script=document.createElement("script");script.appendChild(document.createTextNode(this.jsRunSequence[0].code));script.type="text/javascript";document.getElementsByTagName("head")[0].appendChild(script);this.jsRunSequence.shift();if(this.jsRunSequence.length>0){this.runjs()}}else if(!!this.jsRunSequence[0]&&this.jsRunSequence[0].status=="failed"){var that=this;var script=document.createElement("script");script.src=this.jsRunSequence[0].path;script.type="text/javascript";this.jsRunSequence[0].status="loading";script.onload=function(){that.jsRunSequence.shift();if(that.jsRunSequence.length>0){that.runjs()}};document.body.appendChild(script)}};lsloader.tagLoad=function(path,name){this.jsRunSequence.push({name:name,code:"",path:path,status:"failed"});this.runjs()};lsloader.jsfallback=function(path,name){if(!!this.jsnamemap[name]){return}else{this.jsnamemap[name]=name}for(var k in this.jsRunSequence){if(this.jsRunSequence[k].name==name){this.jsRunSequence[k].code="";this.jsRunSequence[k].status="failed";this.jsRunSequence[k].path=path}}this.runjs()};lsloader.cssfallback=function(path,name,cssonload){if(!!this.cssnamemap[name]){return}else{this.cssnamemap[name]=1}var link=document.createElement("link");link.type="text/css";link.href=path;link.rel="stylesheet";link.onload=link.onerror=cssonload;var root=document.getElementsByTagName("script")[0];root.parentNode.insertBefore(link,root)};lsloader.runInlineScript=function(scriptId,codeId){var code=document.getElementById(codeId).innerText;this.jsRunSequence.push({name:scriptId,code:code});this.runjs()};lsloader.loadCombo=function(jslist){var updateList="";var requestingModules={};for(var k in jslist){var LS=this.getLS(jslist[k].name);if(!!LS){var version=LS.split(versionString)[0];var code=LS.split(versionString)[1]}else{var version=""}if(version==jslist[k].path){this.jsRunSequence.push({name:jslist[k].name,code:code,path:jslist[k].path})}else{this.jsRunSequence.push({name:jslist[k].name,code:null,path:jslist[k].path,status:"comboloading"});requestingModules[jslist[k].name]=true;updateList+=(updateList==""?"":";")+jslist[k].path}}var that=this;if(!!updateList){var xhr=new XMLHttpRequest;xhr.open("get",combo+updateList,true);xhr.onreadystatechange=function(){if(xhr.readyState==4){if(xhr.status>=200&&xhr.status<300||xhr.status==304){if(xhr.response!=""){that.runCombo(xhr.response,requestingModules);return}}else{for(var i in that.jsRunSequence){if(requestingModules[that.jsRunSequence[i].name]){that.jsRunSequence[i].status="failed"}}that.runjs()}}};xhr.send(null)}this.runjs()};lsloader.runCombo=function(comboCode,requestingModules){comboCode=comboCode.split("/*combojs*/");comboCode.shift();for(var k in this.jsRunSequence){if(!!requestingModules[this.jsRunSequence[k].name]&&!!comboCode[0]){this.jsRunSequence[k].status="comboJS";this.jsRunSequence[k].code=comboCode[0];this.setLS(this.jsRunSequence[k].name,this.jsRunSequence[k].path+versionString+comboCode[0]);comboCode.shift()}}this.runjs()}})();
-  </script>
-
-  <!-- Import CSS -->
-  
     
-<link rel="stylesheet" href="/css/fonts.min.css">
 
-  
-  
-    
-      <style id="style_css"></style><script>if(typeof window.lsLoadCSSMaxNums === "undefined")window.lsLoadCSSMaxNums = 0;window.lsLoadCSSMaxNums++;lsloader.load("style_css","/css/style-now.min.css?Q3IlX8SDWal9tefi13UmFw==",function(){if(typeof window.lsLoadCSSNums === "undefined")window.lsLoadCSSNums = 0;window.lsLoadCSSNums++;if(window.lsLoadCSSNums == window.lsLoadCSSMaxNums)document.documentElement.style.display="";}, false)</script>
-    
-  
+    <title>叶平的博客</title>
+    <meta name="author" content="郑叶平" />
+    <meta name="keywords" content="" />
+    <meta name="description" content="" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
 
-  
-    <style>
-      body {
-        background-color: #eeeeee;
-      }
-    </style>
-  
-
-  
-
-  
-<meta name="generator" content="Hexo 5.4.0"></head>
-
-
-
-
-  
-    
-  <body class="mdui-theme-primary-indigo mdui-theme-accent-blue
-   
-  
-  " >
-
-
-  
-
-
-<div id="top"></div>
-
-
-  
-
-  <div class="mdui-appbar animate-appbar mdui-shadow-0" id="blog-appbar">
-    <div class="mdui-toolbar">
-      <button class="mdui-btn mdui-ripple mdui-btn-icon drawer-button" mdui-drawer="{target: '#drawer'}">
-        <i class="mdui-icon">
-          <span></span>
-        </i>
-      </button>
-    </div>
-  </div>
-
-
-
-
-
-
-
-  
-  <div class="mdui-drawer mdui-drawer-full-height mdui-drawer-close
-  " id="drawer" style="z-index: 2001;">
-  <div class="userview" style="background-image: url(/img/bg.png)">
-  <div class="overlay">
-    <img class="mdui-img-circle avatar" src="/img/zyp.jpg"/>
-    <div class="bottom">
-      <div class="info">
-        <div class="author mdui-text-color-white-text">
-          郑叶平
-        </div>
-        <div class="slogan mdui-text-color-white-secondary">
-          愿我们永远拥有好奇心
-        </div>
-      </div>
-      <div class="flex-spacer"></div>
-      
-    </div>
-  </div>
-</div>
-
-  <div class="content">
-  <div class="hexo">
-    
-      <div class="mdui-list no-padding-bottom">
-        <li class="mdui-list-item mdui-ripple mdui-list-item-active">
-          <i class="mdui-list-item-icon mdui-icon material-icons mdui-text-color-theme-accent">&#xe88a;</i>
-          <div class="mdui-list-item-content mdui-text-color-theme-accent">
-            Index
-          </div>
-        </li>
-      </div>
     
     
-      <div class="mdui-list no-padding">
-        <a href="/archives">
-          <li class="mdui-list-item mdui-ripple">
-            <i class="mdui-list-item-icon mdui-icon material-icons">&#xe149;</i>
-            <div class="mdui-list-item-content">
-              Archives
-              <span class="badge new mdui-color-theme-accent" data-badge-caption="">2</span>
-            </div>
-          </li>
-        </a>
-      </div>
-    
-    
-      <div class="mdui-list no-padding-top" mdui-collapse="{accordion: true}" mdui-collapse>
-        
-        
-        <div class="mdui-collapse-item ">
-          <div class="mdui-collapse-item-header mdui-list-item mdui-ripple">
-            <i class="mdui-list-item-icon mdui-icon material-icons">&#xe916;</i>
-            <div class="mdui-list-item-content">Years</div>
-            <i class="mdui-collapse-item-arrow mdui-icon material-icons">&#xe5c5;</i>
-          </div>
-          <div class="mdui-collapse-item-body mdui-list">
-            
-            
-              <a href="/archives/2021/" class="mdui-list-item mdui-ripple">
-                2021
-              </a>
-            
-          </div>
-        </div>
-      </div>
-    
-  </div>
-  
-</div>
 
-  <div class="flex-spacer"></div>
-  <div class="drawer-footer">
-  <div class="mdui-typo mdui-typo-caption-opacity">
-    Powered by <a target="_blank" rel="noopener" href="http://hexo.io">Hexo</a>
-    <br />
-    Theme - <a target="_blank" rel="noopener" href="//github.com/Halyul/hexo-theme-mdui">Halyul/MDUI</a>
-    <br />
-    <span>
-      Copyright ©
-      <span year></span>
-      郑叶平
-    </span>
-    
-    
-      <br />
-      <span>
-        Last updated: Nov 07, 2021
-      </span>
-    
-    
-  </div>
-</div>
-<script type="text/javascript">
-  var copyrightNow = new Date().getFullYear();
-  var textContent = document.querySelector('span[year]')
-  
-    textContent.textContent = copyrightNow
-  
-</script>
-
-</div>
-
-
-
-
-
-
-
-<main>
-  
-  <div class="index-warper animate-post">
-  <div id="index">
-    <div class="faviconImg">
-      <img class="mdui-img-fluid" src="/img/favicon.png" />
-    </div>
-    
-  </div>
-  <div id="search-cover" searchResult></div>
-
-  
-
-  <div id="posts">
-    
-    
-        
-  
-<div class="mdui-card card-bottom-fix mdui-hoverable">
-  <div class="mdui-card-header posts-header">
-    <img class="mdui-card-header-avatar" src="/img/zyp.jpg"/>
-    <div class="content mdui-valign">
-      <div class="mdui-typo-body-1-opacity mdui-typo">
-        <span>郑叶平</span>
-        <span> · </span>
-        <span>Nov 07, 2021</span>
-      </div>
-    </div>
-  <div class="flex-spacer"></div>
-    <a href="/2021/11/07/test/" target="_self" class="mdui-btn mdui-btn-icon mdui-ripple btn-dense"><i class="mdui-icon material-icons">&#xe89e;</i></a>
-  </div>
-  <div class="mdui-card-content posts-content">
-    <div class="posts-excerpt">
-      <a href="/2021/11/07/test/" target="_self" class="posts-title mdui-typo-title no-text-decoration">
-        
-        test
-      </a>
-      <div class="posts-strip mdui-typo-body-1">
-        这是一个测...
-      </div>
-    </div>
-    <div class="flex-spacer"></div>
-    
-      <div class="posts-thumbnail" style="background-image: url(/img/random/picHD_38.png)"></div>
-    
-  </div>
-  
-</div>
-
-
-
-    
-        
-  
-<div class="mdui-card card-bottom-fix mdui-hoverable">
-  <div class="mdui-card-header posts-header">
-    <img class="mdui-card-header-avatar" src="/img/zyp.jpg"/>
-    <div class="content mdui-valign">
-      <div class="mdui-typo-body-1-opacity mdui-typo">
-        <span>郑叶平</span>
-        <span> · </span>
-        <span>Nov 07, 2021</span>
-      </div>
-    </div>
-  <div class="flex-spacer"></div>
-    <a href="/2021/11/07/hello-world/" target="_self" class="mdui-btn mdui-btn-icon mdui-ripple btn-dense"><i class="mdui-icon material-icons">&#xe89e;</i></a>
-  </div>
-  <div class="mdui-card-content posts-content">
-    <div class="posts-excerpt">
-      <a href="/2021/11/07/hello-world/" target="_self" class="posts-title mdui-typo-title no-text-decoration">
-        
-        Hello World
-      </a>
-      <div class="posts-strip mdui-typo-body-1">
-        Welcome to Hexo! This is your very first po...
-      </div>
-    </div>
-    <div class="flex-spacer"></div>
-    
-      <div class="posts-thumbnail" style="background-image: url(/img/random/picHD_26.png)"></div>
-    
-  </div>
-  
-</div>
-
-
-
-    
-  </div>
-  
-
-  <button id="toTop" class="mdui-fab mdui-color-theme-accent mdui-ripple mdui-fab-fixed mdui-fab-hide" style="z-index: 9;" onclick="smoothScroll.animateScroll( 0 );">
-  <i class="mdui-icon material-icons">&#xe5d8;</i>
-</button>
-
-</div>
-
-
-
-</main>
-
-<div id="outdated" style="z-index: 9999;">
-  <h6>Your browser is out-of-date!</h6>
-  <p>Update your browser to view this website correctly. <a id="btnUpdateBrowser" target="_blank" rel="noopener" href="http://outdatedbrowser.com/">Update my browser now </a></p>
-  <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
-</div>
-
-
-
-
-<!-- Import JS -->
-
-  <script>lsloader.load("outdatedbrowser_js","/js/outdatedbrowser.min.js?MmKvEvoD8lT7/fO+ebWwWA==", true)</script>
-
-
-
-    <script>lsloader.load("main_js","/js/js.min.js?7Tw9Ng5ky7PDfky4qwNovg==", true)</script>
-
-
-
-
-
-  
-    <script type="text/ls-javascript" id="global-script">
-  /* appbar button */
-  (function() {
-    var drawer = document.querySelector('#drawer')
-    var drawerBtn = document.querySelector('.drawer-button')
-
-    drawer.addEventListener('open.mdui.drawer', function (e) {
-      drawerBtn.classList.add('back')
-    })
-    drawer.addEventListener('close.mdui.drawer', function (e) {
-      drawerBtn.classList.remove('back')
-    })
-  })();
-
-  
-</script>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  <script type="text/ls-javascript" id="to-top-script">
-  /* fab */
-  (function() {
-    var pageFlag = false;
-    var fab = new mdui.Fab('#toTop');
-    fab.hide();
-    window.addEventListener('scroll', function() {
-      var bodyTop = (document.documentElement && document.documentElement.scrollTop) || document.body.scrollTop;
-      var divTop = document.querySelector('div#top').offsetTop
-      var pageLocation = divTop - bodyTop;
-      if (!pageFlag && pageLocation < 0) {
-        fab.show();
-        pageFlag = true;
-      } else if (pageFlag && pageLocation >= 0) {
-        fab.hide();
-        pageFlag = false;
-      }
-    });
-  })();
-</script>
-
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-<!-- remove diplay:none -->
-<script type="text/ls-javascript" id="html-script">
-  if (document.readyState === 'complete' || document.readyState !== 'loading') {
-    showHTML();
-  } else {
-    document.addEventListener('DOMContentLoaded', showHTML);
-  }
-  function showHTML(){
-    document.querySelector('html').style.display = 'block';
-  }
-</script>
-
-<script>
-  (function(){
-    var scriptList = document.querySelectorAll('script[type="text/ls-javascript"]')
-    for (var i = 0; i < scriptList.length; ++i) {
-      var item = scriptList[i];
-      lsloader.runInlineScript(item.id,item.id);
+    <style type="text/css">
+    @font-face {
+        font-family: 'icomoon';
+        src: url("/fonts/icomoon.eot?q628ml");
+        src: url("/fonts/icomoon.eot?q628ml#iefix") format('embedded-opentype'),
+             url("/fonts/icomoon.ttf?q628ml") format('truetype'),
+             url("/fonts/icomoon.woff?q628ml") format('woff'),
+             url("/fonts/icomoon.svg?q628ml#icomoon") format('svg');
+        font-weight: normal;
+        font-style: normal;
     }
-  })()
-  /*! Copyright 2017 Halyul */
-  console.info("%cCopyright © 2017 Halyul\n"+'Theme Version: 1.5.2'+'%c\nhttps://github.com/Halyul/hexo-theme-mdui',"font-size: 14px;color: #3F51B5;","color: #448AFF;text-decoration: none");
-</script>
+    </style>
+    
+<link rel="stylesheet" href="/css/style.css">
 
 
+    <!--[if lt IE 9]><style type="text/css">.nav-inner {top:0;}.author-meta {position:static;top:0;}.search-form {height:36px;}</style><script type="text/javascript" src="https://unpkg.com/html5shiv@3.7.3/dist/html5shiv.min.js"></script><![endif]-->
+<meta name="generator" content="Hexo 5.4.0"></head>
+<body>
+
+    <main class="app">
+        <header id="header" class="header clearfix">
+    <div id="nav" class="nav">
+    <div class="nav-mobile">
+        <button id="open-panel" class="open-panel nav-mobile-item"><i class="icon-documents"></i></button>
+        <h1 class="nav-mobile-title nav-mobile-item">叶平的博客</h1>
+        <button id="open-menus" class="open-panel nav-mobile-item"><i class="icon-library"></i></button>
+    </div>
+
+    <nav id="nav-inner" class="nav-inner">
+        
+            <a class="nav-item active" href="/">
+                <span class="nav-text">首页</span>
+            </a>
+        
+            <a class="nav-item" href="/categories/HPC">
+                <span class="nav-text">并行计算</span>
+            </a>
+        
+            <a class="nav-item" href="/categories/cpp">
+                <span class="nav-text">C++</span>
+            </a>
+        
+            <a class="nav-item" href="/tags">
+                <span class="nav-text">标签</span>
+            </a>
+        
+            <a class="nav-item" href="/archives">
+                <span class="nav-text">归档</span>
+            </a>
+        
+            <a class="nav-item" href="/about">
+                <span class="nav-text">关于</span>
+            </a>
+        
+    </nav>
+</div>
+
+    <aside id="aside" class="aside">
+    <div id="aside-mask" class="aside-mask"></div>
+    <div id="aside-inner" class="aside-inner">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit"><i class="icon-search-stroke"></i></button><input type="hidden" name="sitesearch" value="http://wonderzyp.cn"></form>
+
+        
+        
+
+        
+        <div class="author-meta">
+            
+            <div class="author-avatar">
+                <a href="/">
+                    <img src="/images/zyp.jpg" title="郑叶平">
+                </a>
+            </div>
+            
+            <div class="author-name">郑叶平</div>
+            <div class="author-work">高性能计算 点云</div>
+            <div class="author-location">
+                <i class="icon-location vm"></i>
+                <span class="vm">大连</span>
+            </div>
+            
+            <div class="author-thread-wrap">
+                <div class="author-threads clearfix">
+                    
+                        <a class="thread-item" href="https://github.com/wonderzyp" target="_blank" rel="noopener">
+                            <!-- Generated by IcoMoon.io -->
+<svg viewBox="0 0 1024 1024" width="38" height="38" fill="currentColor">
+<path d="M512 32.12c-265.004 0-479.88 220.23-479.88 492.090 0 217.446 137.536 401.684 328.202 466.81 23.994 4.498 32.778-10.712 32.778-23.78 0-11.782-0.428-42.632-0.642-83.764-133.466 29.778-161.744-65.984-161.744-65.984-21.852-56.772-53.344-71.982-53.344-71.982-43.49-30.636 3.214-29.992 3.214-29.992 48.202 3.428 73.482 50.772 73.482 50.772 42.846 75.196 112.258 53.558 139.68 40.918 4.284-31.706 16.71-53.558 30.42-65.77-106.474-12.426-218.516-54.63-218.516-243.152 0-53.772 18.638-97.69 49.274-131.966-4.928-12.426-21.424-62.556 4.714-130.252 0 0 40.276-13.282 131.966 50.344 38.348-10.926 79.266-16.282 120.184-16.496 40.704 0.214 81.836 5.57 120.184 16.496 91.692-63.626 131.752-50.344 131.752-50.344 26.136 67.698 9.64 117.828 4.714 130.252 30.636 34.492 49.274 78.408 49.274 131.966 0 188.952-112.258 230.514-219.16 242.724 17.138 15.21 32.564 45.202 32.564 91.048 0 65.77-0.642 118.898-0.642 134.966 0 13.068 8.57 28.492 32.992 23.566 191.094-64.912 328.418-249.152 328.418-466.382 0-271.86-214.874-492.090-479.88-492.090z"></path>
+</svg>
+
+                        </a>
+                    
+                </div>
+            </div>
+            
+        </div>
+        
+    </div>
+</aside>
+
+</header>
+
+        <div id="content" class="content">
+            <div id="wrapper" class="wrapper" style="max-width: 800px">
+                
+    <article class="article" itemscope itemprop="blogPost">
+    
+    <header class="article-header">
+        
+        <h1 itemprop="name">
+            <a href="/2021/11/07/cuda1-1/">cuda1</a>
+        </h1>
+        
+        <div class="article-meta clearfix">
+            <a class="article-date" href="http://wonderzyp.cn/index.html">
+    
+    <i class="icon-calendar vm"></i>
+    
+    <time class="vm" datetime="2021-11-07T09:56:14.000Z" itemprop="datePublished">2021-11-07</time>
+</a>
+
+            
+
+        </div>
+    </header>
+    
+    <section class="article-body markdown-body">
+        
+        
+        
+    </section>
+</article>
+
+
+    <article class="article" itemscope itemprop="blogPost">
+    
+    <header class="article-header">
+        
+        <h1 itemprop="name">
+            <a href="/2021/11/07/cpp1/">cpp1</a>
+        </h1>
+        
+        <div class="article-meta clearfix">
+            <a class="article-date" href="http://wonderzyp.cn/index.html">
+    
+    <i class="icon-calendar vm"></i>
+    
+    <time class="vm" datetime="2021-11-07T09:20:54.000Z" itemprop="datePublished">2021-11-07</time>
+</a>
+
+            
+<div class="article-tag-list">
+    <i class="icon-tag vm"></i>
+    <a class="article-tag-link" href="/tags/cpp/" rel="tag">cpp</a>
+</div>
+
+
+        </div>
+    </header>
+    
+    <section class="article-body markdown-body">
+        
+        <p>测试tttttttttttttttttttttttt</p>
+        
+        <p class="article-more-link">
+            <a href="/2021/11/07/cpp1/#more">
+                <span class="vm">阅读更多</span>
+                <i class="icon-arrow-double-right vm"></i>    
+            </a>
+        </p>
+        
+        
+    </section>
+</article>
+
+
+    <article class="article" itemscope itemprop="blogPost">
+    
+    <header class="article-header">
+        
+        <h1 itemprop="name">
+            <a href="/2021/11/07/cuda1/">CUDA简介</a>
+        </h1>
+        
+        <div class="article-meta clearfix">
+            <a class="article-date" href="http://wonderzyp.cn/index.html">
+    
+    <i class="icon-calendar vm"></i>
+    
+    <time class="vm" datetime="2021-11-07T09:17:54.000Z" itemprop="datePublished">2021-11-07</time>
+</a>
+
+            
+<div class="article-tag-list">
+    <i class="icon-tag vm"></i>
+    <a class="article-tag-link" href="/tags/cuda/" rel="tag">cuda</a>
+</div>
+
+
+        </div>
+    </header>
+    
+    <section class="article-body markdown-body">
+        
+        <h2 id="cuda’s-test"><a href="#cuda’s-test" class="headerlink" title="cuda’s test"></a>cuda’s test</h2>
+        
+    </section>
+</article>
+
+
+    <article class="article" itemscope itemprop="blogPost">
+    
+    <header class="article-header">
+        
+        <h1 itemprop="name">
+            <a href="/2021/11/07/hello-world/">Hello World</a>
+        </h1>
+        
+        <div class="article-meta clearfix">
+            <a class="article-date" href="http://wonderzyp.cn/index.html">
+    
+    <i class="icon-calendar vm"></i>
+    
+    <time class="vm" datetime="2021-11-07T02:48:27.679Z" itemprop="datePublished">2021-11-07</time>
+</a>
+
+            
+
+        </div>
+    </header>
+    
+    <section class="article-body markdown-body">
+        
+        <p>Welcome to <a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a target="_blank" rel="noopener" href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a target="_blank" rel="noopener" href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a target="_blank" rel="noopener" href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+        
+        <p class="article-more-link">
+            <a href="/2021/11/07/hello-world/#more">
+                <span class="vm">阅读更多</span>
+                <i class="icon-arrow-double-right vm"></i>    
+            </a>
+        </p>
+        
+        
+    </section>
+</article>
+
+
+
+
+
+
+            </div>
+        </div>
+        <footer class="footer">
+    Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>, Theme by <a href="https://github.com/sanonz/hexo-theme-concise" target="_blank">Concise</a>
+
+    
+</footer>
+
+    </main>
+
+    <script type="text/javascript" src="https://unpkg.com/jquery@1.9.1/jquery.min.js"></script>
+    <script type="text/javascript">
+    $(function() {
+        var nodes = {
+            nav: $('#nav'),
+            aside: $('#aside'),
+            asideInner: $('#aside-inner'),
+            navInner: $('#nav-inner')
+        };
+
+        var doing = false;
+        nodes.asideInner.on('webkitAnimationEnd mozAnimationEnd oAnimationEnd oanimationend animationend', function() {
+            if (nodes.aside.hasClass('mobile-open')) {
+                nodes.aside.removeClass('mobile-open');
+            } else {
+                nodes.aside.removeClass('mobile-close panel-show');
+            }
+            doing = false;
+        });
+        $('#open-panel, #aside-mask').on('click', function() {
+            if (doing) {
+                return;
+            }
+
+            if (nodes.aside.hasClass('panel-show')) {
+                nodes.aside.addClass('mobile-close');
+            } else {
+                nodes.aside.addClass('mobile-open panel-show');
+            }
+        });
+        $('#open-menus').on('click', function() {
+            nodes.navInner.slideToggle('normal', slideDone);
+        });
+
+        if (window.innerWidth <= 960) {
+            setTimeout(function() {
+                nodes.navInner.slideUp('normal', slideDone);
+            }, 3000);
+        }
+
+        function slideDone() {
+            if (nodes.navInner.css('display') !== 'none') {
+                nodes.navInner.css('display', '');
+            }
+        }
+
+        $(window).on('resize', function() {
+            if ($(this).width() > 960) {
+                nodes.navInner.css('display', '');
+            }
+        });
+    });
+    </script>
+    
 
 </body>
-
 </html>

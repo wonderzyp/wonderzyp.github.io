@@ -68,7 +68,11 @@
 			
 				<li><a href="/categories/HPC" target="_blank">HPC</a></li>
 			
-				<li><a href="/tags/%E9%9A%8F%E7%AC%94/" target="_blank">随笔</a></li>
+				<li><a href="/categories/CPP" target="_blank">C++</a></li>
+			
+				<li><a href="/categories/%E9%9A%8F%E7%AC%94" target="_blank">随笔</a></li>
+			
+				<li><a href="/categories/%E4%BA%BA%E6%96%87%E7%A4%BE%E7%A7%91" target="_blank">人文社科</a></li>
 			
 			</ul>
 		</nav>
@@ -76,10 +80,6 @@
 			
 				
 					<a q-on="click: openSlider(e, 'innerArchive')" href="javascript:void(0)">所有文章</a>
-				
-			
-				
-					<a q-on="click: openSlider(e, 'friends')" href="javascript:void(0)">友链</a>
 				
 			
 				
@@ -96,13 +96,13 @@
 					
 				
 					
-						<a class="github" href="#" 
-												title="GitHub" target="_blank"><i class="icon-github"></i></a>
+						<a class="gitee" href="#" 
+												title="gitee" target="_blank"><i class="icon-gitee"></i></a>
 					
 				
 					
-						<a class="gitee" href="#" 
-												title="gitee" target="_blank"><i class="icon-gitee"></i></a>
+						<a class="mail" href="mailto:2671078523@qq.com" 
+												title="Email" target="_blank"><i class="icon-mail"></i></a>
 					
 				
 			</div>
@@ -139,6 +139,10 @@
 			
 				
 			
+				
+			
+				
+			
 			
 			
 			<nav class="header-nav">
@@ -150,13 +154,13 @@
 						
 					
 						
-						<a class="github" target="_blank" 
-							href="#" title="GitHub"><i class="icon-github"></i></a>
+						<a class="gitee" target="_blank" 
+							href="#" title="gitee"><i class="icon-gitee"></i></a>
 						
 					
 						
-						<a class="gitee" target="_blank" 
-							href="#" title="gitee"><i class="icon-gitee"></i></a>
+						<a class="mail" target="_blank" 
+							href="mailto:2671078523@qq.com" title="Email"><i class="icon-mail"></i></a>
 						
 					
 				</div>
@@ -166,11 +170,15 @@
 				<ul style="width: 70%">
 				
 				
-					<li style="width: 33.333333333333336%"><a href="/">主页</a></li>
+					<li style="width: 20%"><a href="/">主页</a></li>
 		        
-					<li style="width: 33.333333333333336%"><a href="/categories/HPC">HPC</a></li>
+					<li style="width: 20%"><a href="/categories/HPC">HPC</a></li>
 		        
-					<li style="width: 33.333333333333336%"><a href="/tags/%E9%9A%8F%E7%AC%94/">随笔</a></li>
+					<li style="width: 20%"><a href="/categories/CPP">C++</a></li>
+		        
+					<li style="width: 20%"><a href="/categories/%E9%9A%8F%E7%AC%94">随笔</a></li>
+		        
+					<li style="width: 20%"><a href="/categories/%E4%BA%BA%E6%96%87%E7%A4%BE%E7%A7%91">人文社科</a></li>
 		        
 				</ul>
 			</nav>
@@ -238,7 +246,7 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="/categories/reading//" class="article-tag-list-link color3">reading</a>
+        			<a href="/categories/随笔//" class="article-tag-list-link color3">随笔</a>
         		</li>
       		
 		</ul>
@@ -345,25 +353,17 @@
       
       
     
-      
-      
-      
-    
     
 
     <ul style="width: 70%">
     
     
       
-      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'innerArchive')"><a href="javascript:void(0)" q-class="active:innerArchive">所有文章</a></li>
+      <li style="width: 50%" q-on="click: openSlider(e, 'innerArchive')"><a href="javascript:void(0)" q-class="active:innerArchive">所有文章</a></li>
       
         
       
-      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'friends')"><a href="javascript:void(0)" q-class="active:friends">友链</a></li>
-      
-        
-      
-      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'aboutme')"><a href="javascript:void(0)" q-class="active:aboutme">关于我</a></li>
+      <li style="width: 50%" q-on="click: openSlider(e, 'aboutme')"><a href="javascript:void(0)" q-class="active:aboutme">关于我</a></li>
       
         
     </ul>
@@ -392,11 +392,11 @@
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">心理学</a>
+                <a href="javascript:void(0)" class="js-tag color5">读书笔记</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">读书笔记</a>
+                <a href="javascript:void(0)" class="js-tag color4">心理学</a>
               </li>
             
             <div class="clearfix"></div>
@@ -443,50 +443,12 @@
     
 
     
-    	<section class="tools-section tools-section-friends" q-show="friends">
-  		
-        <ul class="search-ul">
-          
-            <li class="search-li">
-              <a href="https://zhousiwei.gitee.io/ibooks/" target="_blank" 
-                class="search-title" title="记录工作和学习过程中的笔记：Java、前端开发、Hexo博客、聚合支付、Linux笔记、ElasticSearch、ELK日志分析">
-                
-                  <img src="https://zhousiwei.gitee.io/ibooks/favicon.ico">
-                
-                技术笔记
-              </a>
-            </li>
-          
-            <li class="search-li">
-              <a href="https://github.com/wonderzyp" target="_blank" 
-                class="search-title" >
-                
-                  <i class="icon-link icon"></i>
-                
-                GitHub
-              </a>
-            </li>
-          
-            <li class="search-li">
-              <a href="https://gitee.com/wonderzyp" target="_blank" 
-                class="search-title" >
-                
-                  <i class="icon-link icon"></i>
-                
-                码云
-              </a>
-            </li>
-          
-        </ul>
-  		
-    	</section>
-    
 
     
     	<section class="tools-section tools-section-me" q-show="aboutme">
         
           
-  	  		<div class="aboutme-wrap" id="aboutme">主要涉及技术：<br>高性能计算、C++开发、<br>leetcode算法题、开源爱好者<br><br>联系QQ:2671078523<br><br>永怀好奇、敬畏知识<br>大家一起进步 :)</div>
+  	  		<div class="aboutme-wrap" id="aboutme">主要涉及技术：<br>高性能计算、C++开发、<br>leetcode算法题、开源爱好者<br><br>QQ:2671078523<br><br>永怀好奇、敬畏知识</div>
   	  	
     	</section>
     

@@ -6,16 +6,21 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://wonderzyp.cn">
-  <title>Archives: 2021/11 | 叶平的博客</title>
+  <title>bit-manipulation | 叶平的博客</title>
   <meta name="generator" content="hexo-theme-yilia-plus">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   
-  <meta property="og:type" content="website">
-<meta property="og:title" content="叶平的博客">
-<meta property="og:url" content="http://wonderzyp.cn/archives/2021/11/index.html">
+  <meta name="description" content="位运算1 常用位操作符及技巧1.1 位操作符   位操作符 功能    &amp;（和） 同1得1   |（或） 有1得1   ^（异或） 相同得0，相异得1   &gt;&gt;（右移） 右移，且高位补0，等价于整除2   &lt;&lt;（左移） 左移，且低位补0，等价于乘2   补充：     右移(&gt;&gt;)：5的二进制为(101)，右移后低位1抹去，高位补零，结果为(010)，对">
+<meta property="og:type" content="article">
+<meta property="og:title" content="bit-manipulation">
+<meta property="og:url" content="http://wonderzyp.cn/2021/11/12/bit-manipulation/index.html">
 <meta property="og:site_name" content="叶平的博客">
+<meta property="og:description" content="位运算1 常用位操作符及技巧1.1 位操作符   位操作符 功能    &amp;（和） 同1得1   |（或） 有1得1   ^（异或） 相同得0，相异得1   &gt;&gt;（右移） 右移，且高位补0，等价于整除2   &lt;&lt;（左移） 左移，且低位补0，等价于乘2   补充：     右移(&gt;&gt;)：5的二进制为(101)，右移后低位1抹去，高位补零，结果为(010)，对">
 <meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-11-12T03:56:55.000Z">
+<meta property="article:modified_time" content="2021-11-12T03:59:11.622Z">
 <meta property="article:author" content="郑叶平">
+<meta property="article:tag" content="位运算">
 <meta name="twitter:card" content="summary">
   
   
@@ -200,41 +205,175 @@
               class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-bit-manipulation" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2021" class="archive-year">2021</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	
-<a href="/2021/11/12/bit-manipulation/" class="archive-article-date">
-        <time datetime="2021-11-12T03:56:55.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2021-11-12</time>
-</a>
-
-        </div>
-    	 
+      <header class="article-header">
   
-    <h1 itemprop="name">
-	
-	  <a class="archive-article-title" href="/2021/11/12/bit-manipulation/" target="_blank">bit-manipulation</a>
   
+    <h1 class="article-title" itemprop="name">
+      bit-manipulation
     </h1>
   
 
 
-        <div class="article-info info-on-right">
+  
+  
+        
+        <span id="busuanzi_container_page_pv" style='display:none' class="archive-article-date">
+              <i class="icon-smile icon"></i> 阅读数：<span id="busuanzi_value_page_pv"></span>次
+        </span>
+
+<a href="/2021/11/12/bit-manipulation/" class="archive-article-date">
+        <time datetime="2021-11-12T03:56:55.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2021-11-12</time>
+</a>
+
+  
+  
+    
+<div style="margin-top:10px;">
+  <span class="post-time">
+    <span class="post-meta-item-icon">
+      <!-- fonts.scss -->
+      <!-- 百度字体平台:http://fontstore.baidu.com/static/editor/index.html -->
+      <i class="icon-statistics"></i>
+      <span class="post-meta-item-text"> 字数统计:</span>
+      <span class="post-count">869字</span>
+    </span>
+  </span>
+
+  <span class="post-time">
+    &nbsp; | &nbsp;
+    <span class="post-meta-item-icon">
+      <i class="icon-book icon"></i>
+      <span class="post-meta-item-text"> 阅读时长≈</span>
+      <span class="post-count">3分</span>
+    </span>
+  </span>
+</div>
+
+
+  
+  </header>
+  
+  <div class="article-entry" itemprop="articleBody">
+    
+    <h1 id="位运算"><a href="#位运算" class="headerlink" title="位运算"></a>位运算</h1><h2 id="1-常用位操作符及技巧"><a href="#1-常用位操作符及技巧" class="headerlink" title="1 常用位操作符及技巧"></a>1 常用位操作符及技巧</h2><h3 id="1-1-位操作符"><a href="#1-1-位操作符" class="headerlink" title="1.1 位操作符"></a>1.1 位操作符</h3><table>
+<thead>
+<tr>
+<th align="center">位操作符</th>
+<th align="center">功能</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">&amp;（和）</td>
+<td align="center">同1得1</td>
+</tr>
+<tr>
+<td align="center">|（或）</td>
+<td align="center">有1得1</td>
+</tr>
+<tr>
+<td align="center">^（异或）</td>
+<td align="center">相同得0，相异得1</td>
+</tr>
+<tr>
+<td align="center">&gt;&gt;（右移）</td>
+<td align="center">右移，且高位补0，等价于整除2</td>
+</tr>
+<tr>
+<td align="center">&lt;&lt;（左移）</td>
+<td align="center">左移，且低位补0，等价于乘2</td>
+</tr>
+<tr>
+<td align="center"><strong>补充</strong>：</td>
+<td align="center"></td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>右移(&gt;&gt;)：5的二进制为(101)，右移后低位1抹去，高位补零，结果为(010)，对应十进制数2；故5&gt;&gt;2等价于5/2</p>
+</blockquote>
+<h3 id="1-2-常用技巧"><a href="#1-2-常用技巧" class="headerlink" title="1.2 常用技巧"></a>1.2 常用技巧</h3><p>注：</p>
+<ol>
+<li>以下均以n=10，对应二进制数(1010)举例</li>
+<li>第i位数，默认自左向右数<h4 id="取二进制的第-i-1-位数"><a href="#取二进制的第-i-1-位数" class="headerlink" title="取二进制的第(i+1)位数"></a>取二进制的第(i+1)位数</h4><blockquote>
+<p>(n&gt;&gt;i) &amp; 1</p>
+</blockquote>
+</li>
+</ol>
+<p>若想获取n二进制数的第2位数(i+1=2, 故i=1)<br>先将1010右移一位，将待取位置于最低位<br>随后&amp;1，即可得到目标位值</p>
+<h4 id="二进制数的赋值"><a href="#二进制数的赋值" class="headerlink" title="二进制数的赋值"></a>二进制数的赋值</h4><blockquote>
+<p>x |= (1&lt;&lt;i)</p>
+</blockquote>
+<p>x一般先初始化为0<br>如果想将n的值赋予x，只需找到n(1010)对应值为1的位即可</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">一般通过循环实现</span><br><span class="line">x=(<span class="number">0000</span>);</span><br><span class="line"></span><br><span class="line">x |= (<span class="number">1</span>&lt;&lt;<span class="number">3</span>);</span><br><span class="line">此时x=(<span class="number">1000</span>)；</span><br><span class="line"></span><br><span class="line">x |= (<span class="number">1</span>&lt;&lt;<span class="number">0</span>);</span><br><span class="line">x=(<span class="number">1010</span>);</span><br></pre></td></tr></table></figure>
+
+<h4 id="将最低位1置为0"><a href="#将最低位1置为0" class="headerlink" title="将最低位1置为0"></a>将最低位1置为0</h4><blockquote>
+<p>n&amp;(n-1)</p>
+</blockquote>
+<p>n=(1010), n-1=(1001)<br>(1010)&amp;(1001)=(1000);<br>n&amp;(n-1)可得到n删去二进制最右侧1的结果</p>
+<h4 id="仅保留最低位的1"><a href="#仅保留最低位的1" class="headerlink" title="仅保留最低位的1"></a>仅保留最低位的1</h4><blockquote>
+<p>n&amp;(-n)</p>
+</blockquote>
+<p><strong>相反数表示：</strong> 将n所有二进制位取反，再将结果+1，即得到-n<br>n=(1010), -n=(0110)</p>
+<p>(1010)&amp;(0110)=(0010)<br>结果仅保留最低位1，其余为均置0</p>
+<h4 id="异或和"><a href="#异或和" class="headerlink" title="异或和"></a>异或和</h4><blockquote>
+<p>x ^= num[i]</p>
+</blockquote>
+<p>一般x初始化为0，因为0^x=x<br>由于两相同数进行异或的结果为0，即x xor x=0<br>故异或常用于找不同</p>
+<h2 id="2-基础题型"><a href="#2-基础题型" class="headerlink" title="2 基础题型"></a>2 基础题型</h2><h3 id="2-1-找数组中特殊的数"><a href="#2-1-找数组中特殊的数" class="headerlink" title="2.1 找数组中特殊的数"></a>2.1 找数组中特殊的数</h3><blockquote>
+<p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/single-number/">leetcode简单-只出现一次的数字</a><br>给定一个非空整数数组，除了某个元素只出现一次以外，其余每个元素均出现两次。找出那个只出现了一次的元素。</p>
+<blockquote>
+<p>示例：<br>输入: [2,2,1]<br>输出: 1</p>
+</blockquote>
+</blockquote>
+<p>解析：找不同多考虑异或，因为相同数异或得到0</p>
+<blockquote>
+<p>关键：<br>x xor x=0<br>x xor 0=x</p>
+</blockquote>
+<p>对本题中数组所有元素进行异或求和，出现两次的元素异或后会被抵消，最终只保留仅出现一次的元素。</p>
+<h3 id="2-2-用二进制数0、1表示状态"><a href="#2-2-用二进制数0、1表示状态" class="headerlink" title="2.2 用二进制数0、1表示状态"></a>2.2 用二进制数0、1表示状态</h3><p>二进制仅包含0、1，可用于表示状态，如元素是否被选取(1表示被选取，0表示未被选取)<br>1010表示仅选取nums[]中第1、3位数</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/subsets/">leetcode中等-子集</a><br>给你一个整数数组nums，数组中的元素互不相同。返回该数组所有可能的子集（幂集）。<br>解集不能包含重复的子集。你可以按任意顺序返回解集。<br>用二进制序列表示数值状态，并一一对应取出:</p>
+<blockquote>
+<p>示例：<br>输入：nums = [1,2,3]<br>输出：[[],[1],[2],[1,2],[3],[1,3],[2,3],[1,2,3]]</p>
+</blockquote>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//核心部分</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">0</span>; i&lt; (<span class="number">1</span> &lt;&lt; n); ++i)&#123;</span><br><span class="line">    t.<span class="built_in">clear</span>();</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> j=<span class="number">0</span>; j&lt;n; ++j)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (i &amp; (<span class="number">1</span> &lt;&lt; j)) &#123;</span><br><span class="line">        <span class="comment">//i用于枚举，i对应二进制中每个位置数为1，则表示该数出现</span></span><br><span class="line">        <span class="comment">// i&amp;(1&lt;&lt;j)，仅当第j位在i中有效时，将该位对应容器索引push进去</span></span><br><span class="line">            t.<span class="built_in">push_back</span>(nums[j]);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    ans.<span class="built_in">push_back</span>(t);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="常用函数"><a href="#常用函数" class="headerlink" title="常用函数"></a>常用函数</h1><p>string.insert(0,1,”a”);<br>在原下标为0的前方，插入一个字符</p>
+
+    
+
+    
+
+    
+    <div class="declare"> 
+      <ul class="post-copyright">
+        <li>
+          <strong>本文作者：</strong>
+          郑叶平
+        </li>
+        <li>
+          <strong>本文链接：</strong>
+          <a href="http://wonderzyp.cn/2021/11/12/bit-manipulation/" title="bit-manipulation" target="_blank">http://wonderzyp.cn/2021/11/12/bit-manipulation/</a>
+        </li>
+        
+        <li>
+          <strong>版权声明： </strong>
           
+          文章由wonderzyp.cn原创，转载需注明出处
+        </li>
+        
+      </ul>
+    </div>
+    
+
+  </div>
+  <div class="article-info article-info-index">
+    
+    
 	<div class="article-tag tagcloud">
 		<i class="icon-price-tags icon"></i>
 		<ul class="article-tag-list">
@@ -246,7 +385,7 @@
 		</ul>
 	</div>
 
-          
+    
 	<div class="article-category tagcloud">
 		<i class="icon-book icon"></i>
 		<ul class="article-tag-list">
@@ -259,233 +398,128 @@
 	</div>
 
 
+    
+
+    
+    
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <!-- <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a> -->
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+     <!-- <img src="//pan.baidu.com/share/qrcode?url=http://wonderzyp.cn/2021/11/12/bit-manipulation/" alt="微信分享二维码"> -->
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+
+    
+    <div class="clearfix"></div>
+  </div>
   </div>
 </article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	
-<a href="/2021/11/07/psychology1/" class="archive-article-date">
-        <time datetime="2021-11-07T10:56:56.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2021-11-07</time>
-</a>
 
+
+<nav id="article-nav">
+  
+  
+    <a href="/2021/11/07/psychology1/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">心理学笔记(1)：心理学是一门科学</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
-  
-    <h1 itemprop="name">
-	
-	  <a class="archive-article-title" href="/2021/11/07/psychology1/" target="_blank">心理学笔记(1)：心理学是一门科学</a>
-  
-    </h1>
-  
+        
+        
+    </div>
+</aside>
 
 
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">心理学</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/人文社科//" class="article-tag-list-link color5">人文社科</a>
-        		</li>
-      		
-		</ul>
-	</div>
 
 
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
+
+
+
+
+
+
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	
-<a href="/2021/11/07/read1/" class="archive-article-date">
-        <time datetime="2021-11-07T10:28:58.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2021-11-07</time>
-</a>
+  <div id="gitment-ctn"></div>
+  
+    <!-- 中文 -->
+    <link rel="stylesheet" href="/lib/gitment.css">
+    <script src="/lib/gitment.js"></script>
+  
+  <script>
+    <!-- id: "bit-manipulation" -->
+    var gitment = new Gitment({
+      id: "20211112115655",
+      owner: 'wonderzyp',
+      repo: 'blogtalk',
+      oauth: {
+        client_id: 'cf8c870ff3131463298a',
+        client_secret: '9ce1a2327180613c3dff8ab819ac9d6b95eb4e7e',
+      },
+    })
+    gitment.render('gitment-ctn')
+  </script>
 
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-	
-	  <a class="archive-article-title" href="/2021/11/07/read1/" target="_blank">人与人之间的不平等是如何产生的？</a>
-  
-    </h1>
+
   
 
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">读书笔记</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/随笔//" class="article-tag-list-link color3">随笔</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	
-<a href="/2021/11/07/cpp%E6%8B%B7%E8%B4%9D%E6%8E%A7%E5%88%B6/" class="archive-article-date">
-        <time datetime="2021-11-07T09:20:54.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2021-11-07</time>
-</a>
-
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-	
-	  <a class="archive-article-title" href="/2021/11/07/cpp%E6%8B%B7%E8%B4%9D%E6%8E%A7%E5%88%B6/" target="_blank">拷贝控制</a>
-  
-    </h1>
-  
-
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/CPP//" class="article-tag-list-link color4">CPP</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	
-<a href="/2021/11/07/cuda1-helloworld/" class="archive-article-date">
-        <time datetime="2021-11-07T09:17:54.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2021-11-07</time>
-</a>
-
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-	
-	  <a class="archive-article-title" href="/2021/11/07/cuda1-helloworld/" target="_blank">CUDA(1)：从Hello World开始</a>
-  
-    </h1>
-  
-
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">cuda</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/HPC//" class="article-tag-list-link color4">HPC</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-    
 
 
           </div>
@@ -526,8 +560,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: true,

@@ -72,6 +72,8 @@
 			
 				<li><a href="/categories/CPP" target="_blank">C++</a></li>
 			
+				<li><a href="/categories/leetcode" target="_blank">力扣</a></li>
+			
 				<li><a href="/categories/%E9%9A%8F%E7%AC%94" target="_blank">随笔</a></li>
 			
 				<li><a href="/categories/%E4%BA%BA%E6%96%87%E7%A4%BE%E7%A7%91" target="_blank">人文社科</a></li>
@@ -145,6 +147,8 @@
 			
 				
 			
+				
+			
 			
 			
 			<nav class="header-nav">
@@ -172,15 +176,17 @@
 				<ul style="width: 70%">
 				
 				
-					<li style="width: 20%"><a href="/">主页</a></li>
+					<li style="width: 16.666666666666668%"><a href="/">主页</a></li>
 		        
-					<li style="width: 20%"><a href="/categories/HPC">HPC</a></li>
+					<li style="width: 16.666666666666668%"><a href="/categories/HPC">HPC</a></li>
 		        
-					<li style="width: 20%"><a href="/categories/CPP">C++</a></li>
+					<li style="width: 16.666666666666668%"><a href="/categories/CPP">C++</a></li>
 		        
-					<li style="width: 20%"><a href="/categories/%E9%9A%8F%E7%AC%94">随笔</a></li>
+					<li style="width: 16.666666666666668%"><a href="/categories/leetcode">力扣</a></li>
 		        
-					<li style="width: 20%"><a href="/categories/%E4%BA%BA%E6%96%87%E7%A4%BE%E7%A7%91">人文社科</a></li>
+					<li style="width: 16.666666666666668%"><a href="/categories/%E9%9A%8F%E7%AC%94">随笔</a></li>
+		        
+					<li style="width: 16.666666666666668%"><a href="/categories/%E4%BA%BA%E6%96%87%E7%A4%BE%E7%A7%91">人文社科</a></li>
 		        
 				</ul>
 			</nav>
@@ -452,23 +458,6 @@
 
 <!--  -->
 
-<script>
-  /* 标签页标题切换 */
-  var originTitle = document.title;
-  var titleTime;
-  document.addEventListener("visibilitychange", function () {
-    if (document.hidden) {
-      document.title = "(つェ⊂) 我藏好了哦~ " + originTitle;
-      clearTimeout(titleTime);
-    } else {
-      document.title = "(*´∇｀*) 被你发现啦~ " + originTitle;
-      titleTime = setTimeout(function () {
-        document.title = originTitle;
-      }, 2000);
-    }
-  });
-</script>
-
 
     
 <div class="tools-col" q-class="show:isShow,hide:isShow|isFalse" q-on="click:stop(e)">
@@ -514,19 +503,23 @@
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">cuda</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">c++</a>
-              </li>
-             
-              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">心理学</a>
               </li>
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">C++</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">cuda</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">读书笔记</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">位运算</a>
               </li>
             
             <div class="clearfix"></div>

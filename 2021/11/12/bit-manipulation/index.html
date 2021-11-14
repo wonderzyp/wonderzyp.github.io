@@ -10,15 +10,15 @@
   <meta name="generator" content="hexo-theme-yilia-plus">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   
-  <meta name="description" content="位运算1 常用位操作符及技巧1.1 位操作符   位操作符 功能    &amp;（和） 同1得1   |（或） 有1得1   ^（异或） 相同得0，相异得1   &gt;&gt;（右移） 右移，且高位补0，等价于整除2   &lt;&lt;（左移） 左移，且低位补0，等价于乘2">
+  <meta name="description" content="位运算是编程时对二进制数的操作，有一定的技巧性。本文主要介绍常见位操作符及技巧，并给出基础例题。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="leetocde-位运算">
 <meta property="og:url" content="http://wonderzyp.cn/2021/11/12/bit-manipulation/index.html">
 <meta property="og:site_name" content="叶平的博客">
-<meta property="og:description" content="位运算1 常用位操作符及技巧1.1 位操作符   位操作符 功能    &amp;（和） 同1得1   |（或） 有1得1   ^（异或） 相同得0，相异得1   &gt;&gt;（右移） 右移，且高位补0，等价于整除2   &lt;&lt;（左移） 左移，且低位补0，等价于乘2">
+<meta property="og:description" content="位运算是编程时对二进制数的操作，有一定的技巧性。本文主要介绍常见位操作符及技巧，并给出基础例题。">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2021-11-12T03:56:55.000Z">
-<meta property="article:modified_time" content="2021-11-14T03:31:15.223Z">
+<meta property="article:modified_time" content="2021-11-14T06:16:51.818Z">
 <meta property="article:author" content="郑叶平">
 <meta property="article:tag" content="位运算">
 <meta name="twitter:card" content="summary">
@@ -238,7 +238,7 @@
       <!-- 百度字体平台:http://fontstore.baidu.com/static/editor/index.html -->
       <i class="icon-statistics"></i>
       <span class="post-meta-item-text"> 字数统计:</span>
-      <span class="post-count">869字</span>
+      <span class="post-count">910字</span>
     </span>
   </span>
 
@@ -258,7 +258,10 @@
   
   <div class="article-entry" itemprop="articleBody">
     
-    <h1 id="位运算"><a href="#位运算" class="headerlink" title="位运算"></a>位运算</h1><h2 id="1-常用位操作符及技巧"><a href="#1-常用位操作符及技巧" class="headerlink" title="1 常用位操作符及技巧"></a>1 常用位操作符及技巧</h2><h3 id="1-1-位操作符"><a href="#1-1-位操作符" class="headerlink" title="1.1 位操作符"></a>1.1 位操作符</h3><table>
+    <p>位运算是编程时对二进制数的操作，有一定的技巧性。本文主要介绍常见位操作符及技巧，并给出基础例题。</p>
+<span id="more"></span>
+
+<h2 id="1-常用位操作符及技巧"><a href="#1-常用位操作符及技巧" class="headerlink" title="1 常用位操作符及技巧"></a>1 常用位操作符及技巧</h2><h3 id="1-1-位操作符"><a href="#1-1-位操作符" class="headerlink" title="1.1 位操作符"></a>1.1 位操作符</h3><table>
 <thead>
 <tr>
 <th align="center">位操作符</th>
@@ -286,7 +289,6 @@
 <td align="center">左移，且低位补0，等价于乘2</td>
 </tr>
 </tbody></table>
-<span id="more"></span>
 <p><strong>补充</strong>：</p>
 <blockquote>
 <p>右移(&gt;&gt;)：5的二进制为(101)，右移后低位1抹去，高位补零，结果为(010)，对应十进制数2；故5&gt;&gt;2等价于5/2</p>

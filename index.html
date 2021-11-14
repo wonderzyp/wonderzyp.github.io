@@ -215,7 +215,7 @@
   
     <h1 itemprop="name">
 	
-	  <a class="article-title" href="/2021/11/12/bit-manipulation/" target="_blank">bit-manipulation</a>
+	  <a class="article-title" href="/2021/11/12/bit-manipulation/" target="_blank">leetocde-位运算</a>
   
     </h1>
   
@@ -263,22 +263,19 @@
 <td align="center">&lt;&lt;（左移）</td>
 <td align="center">左移，且低位补0，等价于乘2</td>
 </tr>
-<tr>
-<td align="center"><strong>补充</strong>：</td>
-<td align="center"></td>
-</tr>
 </tbody></table>
+<p><strong>补充</strong>：</p>
 <blockquote>
 <p>右移(&gt;&gt;)：5的二进制为(101)，右移后低位1抹去，高位补零，结果为(010)，对应十进制数2；故5&gt;&gt;2等价于5/2</p>
 </blockquote>
 <h3 id="1-2-常用技巧"><a href="#1-2-常用技巧" class="headerlink" title="1.2 常用技巧"></a>1.2 常用技巧</h3><p>注：</p>
 <ol>
 <li>以下均以n=10，对应二进制数(1010)举例</li>
-<li>第i位数，默认自左向右数<h4 id="取二进制的第-i-1-位数"><a href="#取二进制的第-i-1-位数" class="headerlink" title="取二进制的第(i+1)位数"></a>取二进制的第(i+1)位数</h4><blockquote>
+<li>第i位数，默认自左向右数</li>
+</ol>
+<h4 id="取二进制的第-i-1-位数"><a href="#取二进制的第-i-1-位数" class="headerlink" title="取二进制的第(i+1)位数"></a>取二进制的第(i+1)位数</h4><blockquote>
 <p>(n&gt;&gt;i) &amp; 1</p>
 </blockquote>
-</li>
-</ol>
 <p>若想获取n二进制数的第2位数(i+1=2, 故i=1)<br>先将1010右移一位，将待取位置于最低位<br>随后&amp;1，即可得到目标位值</p>
 <h4 id="二进制数的赋值"><a href="#二进制数的赋值" class="headerlink" title="二进制数的赋值"></a>二进制数的赋值</h4><blockquote>
 <p>x |= (1&lt;&lt;i)</p>
@@ -888,7 +885,7 @@
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">心理学</a>
+                <a href="javascript:void(0)" class="js-tag color4">位运算</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -904,7 +901,7 @@
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">位运算</a>
+                <a href="javascript:void(0)" class="js-tag color4">心理学</a>
               </li>
             
             <div class="clearfix"></div>

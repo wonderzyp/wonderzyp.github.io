@@ -133,6 +133,9 @@ body input {
   background: none;
   outline: none;
 }
+::-webkit-scrollbar {
+  display: none;
+}
 *::selection {
   background: #ff3b00;
   color: #fff;

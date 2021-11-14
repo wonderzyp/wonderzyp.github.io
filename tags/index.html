@@ -378,31 +378,30 @@
 
 
 
-  <div id="giteement-ctn"></div>
+
   
-    <link rel="stylesheet" href="/lib/default.css">
-    <script src="/lib/giteement.browser.js"></script>
+  <div id="gitment-ctn"></div>
+  
+    <!-- 中文 -->
+    <link rel="stylesheet" href="/lib/gitment.css">
+    <script src="/lib/gitment.js"></script>
   
   <script>
-  <!-- id: "tags" -->
-  var giteement = new Giteement({
-    id: '20211107172420',
-    owner: 'wonderzyp',
-    repo: 'blogtalk',
-    backcall_uri: 'https://wonderzyp.cn/',
-    oauth_uri: 'https://cors-anywhere.herokuapp.com/https://gitee.com/oauth/token',
-    oauth: {
-      client_id: '1eba9c284e632acfbb9be6a6195d7063a1afd87db07435af3b93aba0ade19b81',
-      client_secret: '74de80e75400890f252b20ae65a0da781653c664b544b95dc58f0734a1fa805a'
-    },
-  })
-  giteement.render('giteement-ctn')
+    <!-- id: "tags" -->
+    var gitment = new Gitment({
+      id: "20211107172420",
+      owner: 'wonderzyp',
+      repo: 'blogtalks',
+      oauth: {
+        client_id: '9e72beaafa2b979dcec4',
+        client_secret: 'f68474da721808e1ce40d06e20f1270259e44b2e',
+      },
+    })
+    gitment.render('gitment-ctn')
   </script>
 
 
-
-
-
+  
 
 
 

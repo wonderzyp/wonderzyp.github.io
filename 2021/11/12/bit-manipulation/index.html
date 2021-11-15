@@ -10,15 +10,15 @@
   <meta name="generator" content="hexo-theme-yilia-plus">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   
-  <meta name="description" content="位运算是直接对数的二进制位进行操作，进而实现特定功能，技巧性较强。本文主要介绍常见位操作符及技巧，并通过经典例题进一步阐述">
+  <meta name="description" content="位运算是直接对数的二进制位进行操作，技巧性较强。本文介绍常见位操作符及技巧，并借助经典例题进一步阐述。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="leetocde-位运算">
 <meta property="og:url" content="https://wonderzyp.cn/2021/11/12/bit-manipulation/index.html">
 <meta property="og:site_name" content="叶平的博客">
-<meta property="og:description" content="位运算是直接对数的二进制位进行操作，进而实现特定功能，技巧性较强。本文主要介绍常见位操作符及技巧，并通过经典例题进一步阐述">
+<meta property="og:description" content="位运算是直接对数的二进制位进行操作，技巧性较强。本文介绍常见位操作符及技巧，并借助经典例题进一步阐述。">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2021-11-12T03:56:55.000Z">
-<meta property="article:modified_time" content="2021-11-14T07:37:47.209Z">
+<meta property="article:modified_time" content="2021-11-15T02:49:04.449Z">
 <meta property="article:author" content="郑叶平">
 <meta property="article:tag" content="位运算">
 <meta name="twitter:card" content="summary">
@@ -81,8 +81,6 @@
 				<li><a href="/categories/leetcode" target="_blank">力扣</a></li>
 			
 				<li><a href="/categories/%E9%9A%8F%E7%AC%94" target="_blank">随笔</a></li>
-			
-				<li><a href="/categories/%E4%BA%BA%E6%96%87%E7%A4%BE%E7%A7%91" target="_blank">人文社科</a></li>
 			
 			</ul>
 		</nav>
@@ -153,8 +151,6 @@
 			
 				
 			
-				
-			
 			
 			
 			<nav class="header-nav">
@@ -182,17 +178,15 @@
 				<ul style="width: 70%">
 				
 				
-					<li style="width: 16.666666666666668%"><a href="/">主页</a></li>
+					<li style="width: 20%"><a href="/">主页</a></li>
 		        
-					<li style="width: 16.666666666666668%"><a href="/categories/HPC">HPC</a></li>
+					<li style="width: 20%"><a href="/categories/HPC">HPC</a></li>
 		        
-					<li style="width: 16.666666666666668%"><a href="/categories/cpp">C++</a></li>
+					<li style="width: 20%"><a href="/categories/cpp">C++</a></li>
 		        
-					<li style="width: 16.666666666666668%"><a href="/categories/leetcode">力扣</a></li>
+					<li style="width: 20%"><a href="/categories/leetcode">力扣</a></li>
 		        
-					<li style="width: 16.666666666666668%"><a href="/categories/%E9%9A%8F%E7%AC%94">随笔</a></li>
-		        
-					<li style="width: 16.666666666666668%"><a href="/categories/%E4%BA%BA%E6%96%87%E7%A4%BE%E7%A7%91">人文社科</a></li>
+					<li style="width: 20%"><a href="/categories/%E9%9A%8F%E7%AC%94">随笔</a></li>
 		        
 				</ul>
 			</nav>
@@ -241,7 +235,7 @@
       <!-- 百度字体平台:http://fontstore.baidu.com/static/editor/index.html -->
       <i class="icon-statistics"></i>
       <span class="post-meta-item-text"> 字数统计:</span>
-      <span class="post-count">1.5k字</span>
+      <span class="post-count">1.8k字</span>
     </span>
   </span>
 
@@ -250,7 +244,7 @@
     <span class="post-meta-item-icon">
       <i class="icon-book icon"></i>
       <span class="post-meta-item-text"> 阅读时长≈</span>
-      <span class="post-count">6分</span>
+      <span class="post-count">7分</span>
     </span>
   </span>
 </div>
@@ -261,7 +255,7 @@
   
   <div class="article-entry" itemprop="articleBody">
     
-    <p>位运算是直接对数的二进制位进行操作，进而实现特定功能，技巧性较强。<br>本文主要介绍常见位操作符及技巧，并通过经典例题进一步阐述</p>
+    <p>位运算是直接对数的二进制位进行操作，技巧性较强。<br>本文介绍常见位操作符及技巧，并借助经典例题进一步阐述。</p>
 <span id="more"></span>
 
 <h2 id="1-常用位操作符及技巧"><a href="#1-常用位操作符及技巧" class="headerlink" title="1 常用位操作符及技巧"></a>1 常用位操作符及技巧</h2><h3 id="1-1-位操作符"><a href="#1-1-位操作符" class="headerlink" title="1.1 位操作符"></a>1.1 位操作符</h3><table>
@@ -316,11 +310,24 @@
 </blockquote>
 <h4 id="1-2-4-仅保留最低位的1"><a href="#1-2-4-仅保留最低位的1" class="headerlink" title="1.2.4 仅保留最低位的1"></a>1.2.4 仅保留最低位的1</h4><figure class="highlight cpp"><table><tr><td class="code"><pre><code class="hljs cpp">n&amp;(-n)<br></code></pre></td></tr></table></figure>
 
-<p><strong>相反数表示：</strong> 将n所有二进制位取反，再将结果+1，即得到-n<br>n=(1010), -n=(0110)</p>
-<p>(1010)&amp;(0110)=(0010)<br>结果仅保留最低位1，其余为均置0</p>
-<h4 id="异或和"><a href="#异或和" class="headerlink" title="异或和"></a>异或和</h4><figure class="highlight cpp"><table><tr><td class="code"><pre><code class="hljs cpp">x ^= num[i]<br></code></pre></td></tr></table></figure>
+<blockquote>
+<p>二进制中的相反数：<br>将n所有二进制位取反，再将结果+1，即得到-n</p>
+</blockquote>
+<p>示例：n=(1010), -n=(0110)<br>(1010)&amp;(0110)=(0010)<br>结果仅保留最低位1，其余为均置0</p>
+<h4 id="1-2-5-异或和"><a href="#1-2-5-异或和" class="headerlink" title="1.2.5 异或和"></a>1.2.5 异或和</h4><figure class="highlight cpp"><table><tr><td class="code"><pre><code class="hljs cpp">x ^= num[i]<br></code></pre></td></tr></table></figure>
 
 <p>一般x初始化为0，因为0^x=x<br>由于两相同数进行异或的结果为0，即x xor x=0<br>故异或常用于找不同</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/hamming-distance/">leetcode简单-汉明距离</a><br>两个整数之间的 汉明距离 指的是这两个数字对应二进制位不同的位置的数目。<br>给你两个整数 x 和 y，计算并返回它们之间的汉明距离。</p>
+<blockquote>
+<p>示例：<br>输入：x = 1, y = 4<br>输出：2<br>解释：<br>1   (0 0 0 1)<br>4   (0 1 0 0)<br>1和4的二进制数存在两不同数位</p>
+</blockquote>
+</blockquote>
+<p>思路：显然借助异或和性质，异或后仅相异位会被置1<br>问题转化为：求解异或和的计算结果中1的个数<br>为统计二进制中1的个数，朴素的想法是遍历所有位<br>但考虑到上文提到的n&amp;(n-1)可抹去最低位的1<br>我们可以令 n=n&amp;(n-1), 每次抹去最低位的1，并递增计数器ans表示被抹去1的个数，直到n=0即可</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><code class="hljs cpp"><span class="hljs-keyword">int</span> s=x^y; <span class="hljs-comment">//异或后，仅不同值的位置处为1</span><br><span class="hljs-keyword">while</span> (s)<br>&#123;<br>    s = (s&amp;(s<span class="hljs-number">-1</span>));<br>    ans++;<br>&#125;<br></code></pre></td></tr></table></figure>
+<blockquote>
+<p>注：有个省事的函数**__builtin_popcount(i)**, 可直接计算一个32位无符号整数有多少个位为1)</p>
+</blockquote>
 <h2 id="2-基础经典题型"><a href="#2-基础经典题型" class="headerlink" title="2 基础经典题型"></a>2 基础经典题型</h2><h3 id="2-1-找数组中特殊的数"><a href="#2-1-找数组中特殊的数" class="headerlink" title="2.1 找数组中特殊的数"></a>2.1 找数组中特殊的数</h3><blockquote>
 <p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/single-number/">leetcode简单-只出现一次的数字</a><br>给定一个非空整数数组，除了某个元素只出现一次以外，其余每个元素均出现两次。找出那个只出现了一次的元素。</p>
 <blockquote>
@@ -509,7 +516,7 @@
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E5%B8%B8%E7%94%A8%E4%BD%8D%E6%93%8D%E4%BD%9C%E7%AC%A6%E5%8F%8A%E6%8A%80%E5%B7%A7"><span class="toc-number">1.</span> <span class="toc-text">1 常用位操作符及技巧</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E4%BD%8D%E6%93%8D%E4%BD%9C%E7%AC%A6"><span class="toc-number">1.1.</span> <span class="toc-text">1.1 位操作符</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E5%B8%B8%E7%94%A8%E6%8A%80%E5%B7%A7"><span class="toc-number">1.2.</span> <span class="toc-text">1.2 常用技巧</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-1-%E5%8F%96%E4%BA%8C%E8%BF%9B%E5%88%B6%E7%9A%84%E7%AC%AC-i-1-%E4%BD%8D%E6%95%B0"><span class="toc-number">1.2.1.</span> <span class="toc-text">1.2.1 取二进制的第(i+1)位数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-2-%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%95%B0%E7%9A%84%E8%B5%8B%E5%80%BC"><span class="toc-number">1.2.2.</span> <span class="toc-text">1.2.2 二进制数的赋值</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-3-%E5%B0%86%E6%9C%80%E4%BD%8E%E4%BD%8D1%E7%BD%AE%E4%B8%BA0"><span class="toc-number">1.2.3.</span> <span class="toc-text">1.2.3 将最低位1置为0</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-4-%E4%BB%85%E4%BF%9D%E7%95%99%E6%9C%80%E4%BD%8E%E4%BD%8D%E7%9A%841"><span class="toc-number">1.2.4.</span> <span class="toc-text">1.2.4 仅保留最低位的1</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BC%82%E6%88%96%E5%92%8C"><span class="toc-number">1.2.5.</span> <span class="toc-text">异或和</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E5%9F%BA%E7%A1%80%E7%BB%8F%E5%85%B8%E9%A2%98%E5%9E%8B"><span class="toc-number">2.</span> <span class="toc-text">2 基础经典题型</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E6%89%BE%E6%95%B0%E7%BB%84%E4%B8%AD%E7%89%B9%E6%AE%8A%E7%9A%84%E6%95%B0"><span class="toc-number">2.1.</span> <span class="toc-text">2.1 找数组中特殊的数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E7%94%A8%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%95%B00%E3%80%811%E8%A1%A8%E7%A4%BA%E7%8A%B6%E6%80%81"><span class="toc-number">2.2.</span> <span class="toc-text">2.2 用二进制数0、1表示状态</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-%E8%BD%AC%E5%8C%96%E6%80%9D%E6%83%B3%EF%BC%9A%E5%BB%BA%E7%AB%8B%E6%98%A0%E5%B0%84%E5%85%B3%E7%B3%BB"><span class="toc-number">2.3.</span> <span class="toc-text">2.3 转化思想：建立映射关系</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%81%B7%E6%87%92%E5%87%BD%E6%95%B0"><span class="toc-number">2.4.</span> <span class="toc-text">偷懒函数</span></a></li></ol></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E5%B8%B8%E7%94%A8%E4%BD%8D%E6%93%8D%E4%BD%9C%E7%AC%A6%E5%8F%8A%E6%8A%80%E5%B7%A7"><span class="toc-number">1.</span> <span class="toc-text">1 常用位操作符及技巧</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E4%BD%8D%E6%93%8D%E4%BD%9C%E7%AC%A6"><span class="toc-number">1.1.</span> <span class="toc-text">1.1 位操作符</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E5%B8%B8%E7%94%A8%E6%8A%80%E5%B7%A7"><span class="toc-number">1.2.</span> <span class="toc-text">1.2 常用技巧</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-1-%E5%8F%96%E4%BA%8C%E8%BF%9B%E5%88%B6%E7%9A%84%E7%AC%AC-i-1-%E4%BD%8D%E6%95%B0"><span class="toc-number">1.2.1.</span> <span class="toc-text">1.2.1 取二进制的第(i+1)位数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-2-%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%95%B0%E7%9A%84%E8%B5%8B%E5%80%BC"><span class="toc-number">1.2.2.</span> <span class="toc-text">1.2.2 二进制数的赋值</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-3-%E5%B0%86%E6%9C%80%E4%BD%8E%E4%BD%8D1%E7%BD%AE%E4%B8%BA0"><span class="toc-number">1.2.3.</span> <span class="toc-text">1.2.3 将最低位1置为0</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-4-%E4%BB%85%E4%BF%9D%E7%95%99%E6%9C%80%E4%BD%8E%E4%BD%8D%E7%9A%841"><span class="toc-number">1.2.4.</span> <span class="toc-text">1.2.4 仅保留最低位的1</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-5-%E5%BC%82%E6%88%96%E5%92%8C"><span class="toc-number">1.2.5.</span> <span class="toc-text">1.2.5 异或和</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E5%9F%BA%E7%A1%80%E7%BB%8F%E5%85%B8%E9%A2%98%E5%9E%8B"><span class="toc-number">2.</span> <span class="toc-text">2 基础经典题型</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E6%89%BE%E6%95%B0%E7%BB%84%E4%B8%AD%E7%89%B9%E6%AE%8A%E7%9A%84%E6%95%B0"><span class="toc-number">2.1.</span> <span class="toc-text">2.1 找数组中特殊的数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E7%94%A8%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%95%B00%E3%80%811%E8%A1%A8%E7%A4%BA%E7%8A%B6%E6%80%81"><span class="toc-number">2.2.</span> <span class="toc-text">2.2 用二进制数0、1表示状态</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-%E8%BD%AC%E5%8C%96%E6%80%9D%E6%83%B3%EF%BC%9A%E5%BB%BA%E7%AB%8B%E6%98%A0%E5%B0%84%E5%85%B3%E7%B3%BB"><span class="toc-number">2.3.</span> <span class="toc-text">2.3 转化思想：建立映射关系</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%81%B7%E6%87%92%E5%87%BD%E6%95%B0"><span class="toc-number">2.4.</span> <span class="toc-text">偷懒函数</span></a></li></ol></li></ol>
                     </div>
                 </span>
             </div>

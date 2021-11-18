@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#0078E7"><meta name="author" content="郑叶平"><meta name="copyright" content="郑叶平"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>leetocde-位运算 | 叶平的博客</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#0078E7"><meta name="author" content="公子平"><meta name="copyright" content="公子平"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>leetocde-位运算 | 公子平的博客</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
   [".post-card",".post-content img"].forEach((target)=> {
     ScrollReveal().reveal(target);
   })
@@ -7,133 +7,183 @@ document.addEventListener("DOMContentLoaded", initScrollReveal);
 document.addEventListener("pjax:success", initScrollReveal);
 </script><link rel="icon" type="image/svg+xml" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#0078E7"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
     const Yun = window.Yun || {};
-    window.CONFIG = {"hostname":"wonderzyp.cn","root":"/","title":"平公子的小站","version":"1.7.0","mode":"light","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}.","hits":"${hits} results found","hits_time":"${hits} results found in ${time} ms"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"/data/sentences.json"},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
-  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><meta name="description" content="位运算是直接对数的二进制位进行操作，技巧性较强。本文介绍常见位操作符及技巧，并借助经典例题进一步阐述。">
+    window.CONFIG = {"hostname":"wonderzyp.cn","root":"/","title":"公子平的小站","version":"1.7.0","mode":"light","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}.","hits":"${hits} results found","hits_time":"${hits} results found in ${time} ms"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"/data/sentences.json"},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><meta name="description" content="位运算是直接对数的二进制位进行操作，技巧性较强。 本文介绍常见位操作符及技巧，并借助经典例题进一步阐述。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="leetocde-位运算">
 <meta property="og:url" content="https://wonderzyp.cn/2021/11/12/bit-manipulation/index.html">
-<meta property="og:site_name" content="叶平的博客">
-<meta property="og:description" content="位运算是直接对数的二进制位进行操作，技巧性较强。本文介绍常见位操作符及技巧，并借助经典例题进一步阐述。">
+<meta property="og:site_name" content="公子平的博客">
+<meta property="og:description" content="位运算是直接对数的二进制位进行操作，技巧性较强。 本文介绍常见位操作符及技巧，并借助经典例题进一步阐述。">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2021-11-12T03:56:55.000Z">
 <meta property="article:modified_time" content="2021-11-15T02:49:04.449Z">
-<meta property="article:author" content="郑叶平">
+<meta property="article:author" content="公子平">
 <meta property="article:tag" content="位运算">
-<meta name="twitter:card" content="summary"></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="Table of Contents"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="Overview"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="郑叶平"><img width="96" loading="lazy" src="/yun.png" alt="郑叶平"></a><div class="site-author-name"><a href="/about/">郑叶平</a></div><span class="site-name">叶平的博客</span><sub class="site-subtitle"></sub><div class="site-desciption"></div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="Home"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="Archives"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">5</span></a></div><div class="site-state-item"><a href="/categories/" title="Categories"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">4</span></a></div><div class="site-state-item"><a href="/tags/" title="Tags"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">5</span></a></div><a class="site-state-item hty-icon-button" target="_blank" rel="noopener" href="https://yun.yunyoujun.cn" title="文档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-settings-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/wonderzyp" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="mailto:2671078523@qq.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a></div></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E5%B8%B8%E7%94%A8%E4%BD%8D%E6%93%8D%E4%BD%9C%E7%AC%A6%E5%8F%8A%E6%8A%80%E5%B7%A7"><span class="toc-number">1.</span> <span class="toc-text">1 常用位操作符及技巧</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E4%BD%8D%E6%93%8D%E4%BD%9C%E7%AC%A6"><span class="toc-number">1.1.</span> <span class="toc-text">1.1 位操作符</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E5%B8%B8%E7%94%A8%E6%8A%80%E5%B7%A7"><span class="toc-number">1.2.</span> <span class="toc-text">1.2 常用技巧</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-1-%E5%8F%96%E4%BA%8C%E8%BF%9B%E5%88%B6%E7%9A%84%E7%AC%AC-i-1-%E4%BD%8D%E6%95%B0"><span class="toc-number">1.2.1.</span> <span class="toc-text">1.2.1 取二进制的第(i+1)位数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-2-%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%95%B0%E7%9A%84%E8%B5%8B%E5%80%BC"><span class="toc-number">1.2.2.</span> <span class="toc-text">1.2.2 二进制数的赋值</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-3-%E5%B0%86%E6%9C%80%E4%BD%8E%E4%BD%8D1%E7%BD%AE%E4%B8%BA0"><span class="toc-number">1.2.3.</span> <span class="toc-text">1.2.3 将最低位1置为0</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-4-%E4%BB%85%E4%BF%9D%E7%95%99%E6%9C%80%E4%BD%8E%E4%BD%8D%E7%9A%841"><span class="toc-number">1.2.4.</span> <span class="toc-text">1.2.4 仅保留最低位的1</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-5-%E5%BC%82%E6%88%96%E5%92%8C"><span class="toc-number">1.2.5.</span> <span class="toc-text">1.2.5 异或和</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E5%9F%BA%E7%A1%80%E7%BB%8F%E5%85%B8%E9%A2%98%E5%9E%8B"><span class="toc-number">2.</span> <span class="toc-text">2 基础经典题型</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E6%89%BE%E6%95%B0%E7%BB%84%E4%B8%AD%E7%89%B9%E6%AE%8A%E7%9A%84%E6%95%B0"><span class="toc-number">2.1.</span> <span class="toc-text">2.1 找数组中特殊的数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E7%94%A8%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%95%B00%E3%80%811%E8%A1%A8%E7%A4%BA%E7%8A%B6%E6%80%81"><span class="toc-number">2.2.</span> <span class="toc-text">2.2 用二进制数0、1表示状态</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-%E8%BD%AC%E5%8C%96%E6%80%9D%E6%83%B3%EF%BC%9A%E5%BB%BA%E7%AB%8B%E6%98%A0%E5%B0%84%E5%85%B3%E7%B3%BB"><span class="toc-number">2.3.</span> <span class="toc-text">2.3 转化思想：建立映射关系</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%81%B7%E6%87%92%E5%87%BD%E6%95%B0"><span class="toc-number">2.4.</span> <span class="toc-text">偷懒函数</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://wonderzyp.cn/2021/11/12/bit-manipulation/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="郑叶平"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="叶平的博客"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">leetocde-位运算</h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="Created: 2021-11-12 11:56:55" itemprop="dateCreated datePublished" datetime="2021-11-12T11:56:55+08:00">2021-11-12</time><span class="post-meta-divider">-</span><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-2-line"></use></svg></span> <time title="Modified: 2021-11-15 10:49:04" itemprop="dateModified" datetime="2021-11-15T10:49:04+08:00">2021-11-15</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="Word count in article"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="Word count in article">1.8k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="Reading time"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="Reading time">7m</span></span></span><span class="post-busuanzi"><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="Views"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-eye-line"></use></svg> <span id="busuanzi_value_page_pv"></span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/leetcode/" style="--text-color:/categories/leetcode" itemprop="url" rel="index"><span itemprop="text">leetcode</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/%E4%BD%8D%E8%BF%90%E7%AE%97/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">位运算</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#0078E7;"><p>位运算是直接对数的二进制位进行操作，技巧性较强。<br>本文介绍常见位操作符及技巧，并借助经典例题进一步阐述。</p>
+<meta name="twitter:card" content="summary"></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="Table of Contents"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="Overview"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="公子平"><img width="96" loading="lazy" src="/yun.png" alt="公子平"></a><div class="site-author-name"><a href="/about/">公子平</a></div><span class="site-name">公子平的博客</span><sub class="site-subtitle"></sub><div class="site-desciption"></div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="Home"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="Archives"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">5</span></a></div><div class="site-state-item"><a href="/categories/" title="Categories"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">4</span></a></div><div class="site-state-item"><a href="/tags/" title="Tags"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">5</span></a></div><a class="site-state-item hty-icon-button" target="_blank" rel="noopener" href="https://yun.yunyoujun.cn" title="文档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-settings-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/wonderzyp" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="mailto:2671078523@qq.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a></div></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E5%B8%B8%E7%94%A8%E4%BD%8D%E6%93%8D%E4%BD%9C%E7%AC%A6%E5%8F%8A%E6%8A%80%E5%B7%A7"><span class="toc-number">1.</span> <span class="toc-text">1 常用位操作符及技巧</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E4%BD%8D%E6%93%8D%E4%BD%9C%E7%AC%A6"><span class="toc-number">1.1.</span> <span class="toc-text">1.1 位操作符</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E5%B8%B8%E7%94%A8%E6%8A%80%E5%B7%A7"><span class="toc-number">1.2.</span> <span class="toc-text">1.2 常用技巧</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-1-%E5%8F%96%E4%BA%8C%E8%BF%9B%E5%88%B6%E7%9A%84%E7%AC%AC-i-1-%E4%BD%8D%E6%95%B0"><span class="toc-number">1.2.1.</span> <span class="toc-text">1.2.1 取二进制的第(i+1)位数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-2-%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%95%B0%E7%9A%84%E8%B5%8B%E5%80%BC"><span class="toc-number">1.2.2.</span> <span class="toc-text">1.2.2 二进制数的赋值</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-3-%E5%B0%86%E6%9C%80%E4%BD%8E%E4%BD%8D1%E7%BD%AE%E4%B8%BA0"><span class="toc-number">1.2.3.</span> <span class="toc-text">1.2.3 将最低位1置为0</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-4-%E4%BB%85%E4%BF%9D%E7%95%99%E6%9C%80%E4%BD%8E%E4%BD%8D%E7%9A%841"><span class="toc-number">1.2.4.</span> <span class="toc-text">1.2.4 仅保留最低位的1</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-5-%E5%BC%82%E6%88%96%E5%92%8C"><span class="toc-number">1.2.5.</span> <span class="toc-text">1.2.5 异或和</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E5%9F%BA%E7%A1%80%E7%BB%8F%E5%85%B8%E9%A2%98%E5%9E%8B"><span class="toc-number">2.</span> <span class="toc-text">2 基础经典题型</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E6%89%BE%E6%95%B0%E7%BB%84%E4%B8%AD%E7%89%B9%E6%AE%8A%E7%9A%84%E6%95%B0"><span class="toc-number">2.1.</span> <span class="toc-text">2.1 找数组中特殊的数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E7%94%A8%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%95%B00%E3%80%811%E8%A1%A8%E7%A4%BA%E7%8A%B6%E6%80%81"><span class="toc-number">2.2.</span> <span class="toc-text">2.2 用二进制数0、1表示状态</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-%E8%BD%AC%E5%8C%96%E6%80%9D%E6%83%B3%EF%BC%9A%E5%BB%BA%E7%AB%8B%E6%98%A0%E5%B0%84%E5%85%B3%E7%B3%BB"><span class="toc-number">2.3.</span> <span class="toc-text">2.3 转化思想：建立映射关系</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%81%B7%E6%87%92%E5%87%BD%E6%95%B0"><span class="toc-number">2.4.</span> <span class="toc-text">偷懒函数</span></a></li></ol></li></ol></div></div></div><div class="tag-cloud"><div class="tag-cloud-tags"><a href="/tags/C/" style="font-size: 12px; color: #999">C++</a> <a href="/tags/cuda/" style="font-size: 12px; color: #999">cuda</a> <a href="/tags/%E4%BD%8D%E8%BF%90%E7%AE%97/" style="font-size: 12px; color: #999">位运算</a> <a href="/tags/%E5%BF%83%E7%90%86%E5%AD%A6/" style="font-size: 12px; color: #999">心理学</a> <a href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/" style="font-size: 12px; color: #999">读书笔记</a></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://wonderzyp.cn/2021/11/12/bit-manipulation/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="公子平"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="公子平的博客"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">leetocde-位运算</h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="Created: 2021-11-12 11:56:55" itemprop="dateCreated datePublished" datetime="2021-11-12T11:56:55+08:00">2021-11-12</time><span class="post-meta-divider">-</span><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-2-line"></use></svg></span> <time title="Modified: 2021-11-15 10:49:04" itemprop="dateModified" datetime="2021-11-15T10:49:04+08:00">2021-11-15</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="Word count in article"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="Word count in article">1.8k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="Reading time"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="Reading time">7m</span></span></span><span class="post-busuanzi"><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="Views"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-eye-line"></use></svg> <span id="busuanzi_value_page_pv"></span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/leetcode/" style="--text-color:/categories/leetcode" itemprop="url" rel="index"><span itemprop="text">leetcode</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/%E4%BD%8D%E8%BF%90%E7%AE%97/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">位运算</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#0078E7;"><p>位运算是直接对数的二进制位进行操作，技巧性较强。<br>
+本文介绍常见位操作符及技巧，并借助经典例题进一步阐述。</p>
 <span id="more"></span>
-
-<h2 id="1-常用位操作符及技巧"><a href="#1-常用位操作符及技巧" class="headerlink" title="1 常用位操作符及技巧"></a>1 常用位操作符及技巧</h2><h3 id="1-1-位操作符"><a href="#1-1-位操作符" class="headerlink" title="1.1 位操作符"></a>1.1 位操作符</h3><table>
+<h2 id="1-常用位操作符及技巧">1 常用位操作符及技巧</h2>
+<h3 id="1-1-位操作符">1.1 位操作符</h3>
+<table>
 <thead>
 <tr>
-<th align="center">位操作符</th>
-<th align="center">功能</th>
+<th style="text-align:center">位操作符</th>
+<th style="text-align:center">功能</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">&amp;（和）</td>
-<td align="center">同1得1</td>
+<tbody>
+<tr>
+<td style="text-align:center">&amp;（和）</td>
+<td style="text-align:center">同1得1</td>
 </tr>
 <tr>
-<td align="center">|（或）</td>
-<td align="center">有1得1</td>
+<td style="text-align:center">|（或）</td>
+<td style="text-align:center">有1得1</td>
 </tr>
 <tr>
-<td align="center">^（异或）</td>
-<td align="center">相同得0，相异得1</td>
+<td style="text-align:center">^（异或）</td>
+<td style="text-align:center">相同得0，相异得1</td>
 </tr>
 <tr>
-<td align="center">&gt;&gt;（右移）</td>
-<td align="center">右移，且高位补0，等价于整除2</td>
+<td style="text-align:center">&gt;&gt;（右移）</td>
+<td style="text-align:center">右移，且高位补0，等价于整除2</td>
 </tr>
 <tr>
-<td align="center">&lt;&lt;（左移）</td>
-<td align="center">左移，且低位补0，等价于乘2</td>
+<td style="text-align:center">&lt;&lt;（左移）</td>
+<td style="text-align:center">左移，且低位补0，等价于乘2</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <p><strong>补充</strong>：</p>
 <blockquote>
-<p>右移(&gt;&gt;)：5的二进制为(101)，右移后低位1抹去，高位补零，结果为(010)<br>(010)对应十进制数2；故5&gt;&gt;2等价于5/2</p>
+<p>右移(&gt;&gt;)：5的二进制为(101)，右移后低位1抹去，高位补零，结果为(010)<br>
+(010)对应十进制数2；故5&gt;&gt;2等价于5/2</p>
 </blockquote>
-<h3 id="1-2-常用技巧"><a href="#1-2-常用技巧" class="headerlink" title="1.2 常用技巧"></a>1.2 常用技巧</h3><h4 id="1-2-1-取二进制的第-i-1-位数"><a href="#1-2-1-取二进制的第-i-1-位数" class="headerlink" title="1.2.1 取二进制的第(i+1)位数"></a>1.2.1 取二进制的第(i+1)位数</h4><figure class="highlight cpp"><table><tr><td class="code"><pre><code class="hljs cpp"><span class="hljs-comment">//法1：</span><br>(n&gt;&gt;i) &amp; <span class="hljs-number">1</span><br><span class="hljs-comment">//法2：</span><br>n &amp; (<span class="hljs-number">1</span>&lt;&lt;i)<br></code></pre></td></tr></table></figure>
-<p>首先，任何数&amp;1，结果为该二进制数最低位的值<br>(1010)&amp;1=0, (1011)&amp;1=1<br>此处1可以理解为(0001)，在高位补零</p>
+<h3 id="1-2-常用技巧">1.2 常用技巧</h3>
+<h4 id="1-2-1-取二进制的第-i-1-位数">1.2.1 取二进制的第(i+1)位数</h4>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><code class="hljs cpp"><span class="hljs-comment">//法1：</span><br>(n&gt;&gt;i) &amp; <span class="hljs-number">1</span><br><span class="hljs-comment">//法2：</span><br>n &amp; (<span class="hljs-number">1</span>&lt;&lt;i)<br></code></pre></td></tr></table></figure>
+<p>首先，任何数&amp;1，结果为该二进制数最低位的值<br>
+(1010)&amp;1=0, (1011)&amp;1=1<br>
+此处1可以理解为(0001)，在高位补零</p>
 <p>那么，若想获取n的二进制数第i位数：</p>
 <ol>
 <li>可以将第i位数右移到最低位，再&amp;1（对应法1）；</li>
 <li>或将1左移到第i位（对应法2）</li>
 </ol>
-<h4 id="1-2-2-二进制数的赋值"><a href="#1-2-2-二进制数的赋值" class="headerlink" title="1.2.2 二进制数的赋值"></a>1.2.2 二进制数的赋值</h4><figure class="highlight cpp"><table><tr><td class="code"><pre><code class="hljs cpp">x |= (<span class="hljs-number">1</span>&lt;&lt;i)<br></code></pre></td></tr></table></figure>
-
-<p>x一般先初始化为0<br>如果想将n的值赋予x，只需找到n(1010)对应值为1的位即可</p>
+<h4 id="1-2-2-二进制数的赋值">1.2.2 二进制数的赋值</h4>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><code class="hljs cpp">x |= (<span class="hljs-number">1</span>&lt;&lt;i)<br></code></pre></td></tr></table></figure>
+<p>x一般先初始化为0<br>
+如果想将n的值赋予x，只需找到n(1010)对应值为1的位即可</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><code class="hljs cpp">一般通过循环实现<br>x=(<span class="hljs-number">0000</span>);<br><br>x |= (<span class="hljs-number">1</span>&lt;&lt;<span class="hljs-number">3</span>);<br>此时x=(<span class="hljs-number">1000</span>)；<br><br>x |= (<span class="hljs-number">1</span>&lt;&lt;<span class="hljs-number">0</span>);<br>x=(<span class="hljs-number">1010</span>);<br></code></pre></td></tr></table></figure>
-
-<h4 id="1-2-3-将最低位1置为0"><a href="#1-2-3-将最低位1置为0" class="headerlink" title="1.2.3 将最低位1置为0"></a>1.2.3 将最低位1置为0</h4><figure class="highlight cpp"><table><tr><td class="code"><pre><code class="hljs cpp">n&amp;(n<span class="hljs-number">-1</span>)<br></code></pre></td></tr></table></figure>
-
-<p>n=(1010), n-1=(1001)<br>(1010)&amp;(1001)=(1000);<br>n&amp;(n-1)可得到n删去二进制最右侧1的结果</p>
+<h4 id="1-2-3-将最低位1置为0">1.2.3 将最低位1置为0</h4>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><code class="hljs cpp">n&amp;(n<span class="hljs-number">-1</span>)<br></code></pre></td></tr></table></figure>
+<p>n=(1010), n-1=(1001)<br>
+(1010)&amp;(1001)=(1000);<br>
+n&amp;(n-1)可得到n删去二进制最右侧1的结果</p>
 <blockquote>
 <p>n&amp;(n-1)可加速统计二进制数中1的个数，每统计完最右侧的1，即通过n&amp;(n-1)抹去低位1，避免遍历二进制数</p>
 </blockquote>
-<h4 id="1-2-4-仅保留最低位的1"><a href="#1-2-4-仅保留最低位的1" class="headerlink" title="1.2.4 仅保留最低位的1"></a>1.2.4 仅保留最低位的1</h4><figure class="highlight cpp"><table><tr><td class="code"><pre><code class="hljs cpp">n&amp;(-n)<br></code></pre></td></tr></table></figure>
-
+<h4 id="1-2-4-仅保留最低位的1">1.2.4 仅保留最低位的1</h4>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><code class="hljs cpp">n&amp;(-n)<br></code></pre></td></tr></table></figure>
 <blockquote>
-<p>二进制中的相反数：<br>将n所有二进制位取反，再将结果+1，即得到-n</p>
+<p>二进制中的相反数：<br>
+将n所有二进制位取反，再将结果+1，即得到-n</p>
 </blockquote>
-<p>示例：n=(1010), -n=(0110)<br>(1010)&amp;(0110)=(0010)<br>结果仅保留最低位1，其余为均置0</p>
-<h4 id="1-2-5-异或和"><a href="#1-2-5-异或和" class="headerlink" title="1.2.5 异或和"></a>1.2.5 异或和</h4><figure class="highlight cpp"><table><tr><td class="code"><pre><code class="hljs cpp">x ^= num[i]<br></code></pre></td></tr></table></figure>
-
-<p>一般x初始化为0，因为0^x=x<br>由于两相同数进行异或的结果为0，即x xor x=0<br>故异或常用于找不同</p>
+<p>示例：n=(1010), -n=(0110)<br>
+(1010)&amp;(0110)=(0010)<br>
+结果仅保留最低位1，其余为均置0</p>
+<h4 id="1-2-5-异或和">1.2.5 异或和</h4>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><code class="hljs cpp">x ^= num[i]<br></code></pre></td></tr></table></figure>
+<p>一般x初始化为0，因为0^x=x<br>
+由于两相同数进行异或的结果为0，即x xor x=0<br>
+故异或常用于找不同</p>
 <blockquote>
-<p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/hamming-distance/">leetcode简单-汉明距离</a><br>两个整数之间的 汉明距离 指的是这两个数字对应二进制位不同的位置的数目。<br>给你两个整数 x 和 y，计算并返回它们之间的汉明距离。</p>
+<p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/hamming-distance/">leetcode简单-汉明距离</a><br>
+两个整数之间的 汉明距离 指的是这两个数字对应二进制位不同的位置的数目。<br>
+给你两个整数 x 和 y，计算并返回它们之间的汉明距离。</p>
 <blockquote>
-<p>示例：<br>输入：x = 1, y = 4<br>输出：2<br>解释：<br>1   (0 0 0 1)<br>4   (0 1 0 0)<br>1和4的二进制数存在两不同数位</p>
+<p>示例：<br>
+输入：x = 1, y = 4<br>
+输出：2<br>
+解释：<br>
+1   (0 0 0 1)<br>
+4   (0 1 0 0)<br>
+1和4的二进制数存在两不同数位</p>
 </blockquote>
 </blockquote>
-<p>思路：显然借助异或和性质，异或后仅相异位会被置1<br>问题转化为：求解异或和的计算结果中1的个数<br>为统计二进制中1的个数，朴素的想法是遍历所有位<br>但考虑到上文提到的n&amp;(n-1)可抹去最低位的1<br>我们可以令 n=n&amp;(n-1), 每次抹去最低位的1，并递增计数器ans表示被抹去1的个数，直到n=0即可</p>
+<p>思路：显然借助异或和性质，异或后仅相异位会被置1<br>
+问题转化为：求解异或和的计算结果中1的个数<br>
+为统计二进制中1的个数，朴素的想法是遍历所有位<br>
+但考虑到上文提到的n&amp;(n-1)可抹去最低位的1<br>
+我们可以令 n=n&amp;(n-1), 每次抹去最低位的1，并递增计数器ans表示被抹去1的个数，直到n=0即可</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><code class="hljs cpp"><span class="hljs-keyword">int</span> s=x^y; <span class="hljs-comment">//异或后，仅不同值的位置处为1</span><br><span class="hljs-keyword">while</span> (s)<br>&#123;<br>    s = (s&amp;(s<span class="hljs-number">-1</span>));<br>    ans++;<br>&#125;<br></code></pre></td></tr></table></figure>
 <blockquote>
 <p>注：有个省事的函数**__builtin_popcount(i)**, 可直接计算一个32位无符号整数有多少个位为1)</p>
 </blockquote>
-<h2 id="2-基础经典题型"><a href="#2-基础经典题型" class="headerlink" title="2 基础经典题型"></a>2 基础经典题型</h2><h3 id="2-1-找数组中特殊的数"><a href="#2-1-找数组中特殊的数" class="headerlink" title="2.1 找数组中特殊的数"></a>2.1 找数组中特殊的数</h3><blockquote>
-<p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/single-number/">leetcode简单-只出现一次的数字</a><br>给定一个非空整数数组，除了某个元素只出现一次以外，其余每个元素均出现两次。找出那个只出现了一次的元素。</p>
+<h2 id="2-基础经典题型">2 基础经典题型</h2>
+<h3 id="2-1-找数组中特殊的数">2.1 找数组中特殊的数</h3>
 <blockquote>
-<p>示例：<br>输入: [2,2,1]<br>输出: 1</p>
+<p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/single-number/">leetcode简单-只出现一次的数字</a><br>
+给定一个非空整数数组，除了某个元素只出现一次以外，其余每个元素均出现两次。找出那个只出现了一次的元素。</p>
+<blockquote>
+<p>示例：<br>
+输入: [2,2,1]<br>
+输出: 1</p>
 </blockquote>
 </blockquote>
 <p>解析：找不同多考虑异或，因为相同数异或得到0</p>
 <blockquote>
-<p>关键：<br>x xor x=0<br>x xor 0=x</p>
+<p>关键：<br>
+x xor x=0<br>
+x xor 0=x</p>
 </blockquote>
 <p>对本题中数组所有元素进行异或求和，出现两次的元素异或后会被抵消，最终只保留仅出现一次的元素。</p>
-<h3 id="2-2-用二进制数0、1表示状态"><a href="#2-2-用二进制数0、1表示状态" class="headerlink" title="2.2 用二进制数0、1表示状态"></a>2.2 用二进制数0、1表示状态</h3><p>二进制仅包含0、1，可用于表示状态，如元素是否被选取(1表示被选取，0表示未被选取)<br>例如对于数组nums={1,2,3,4},可以用(0101)表示选取元素2和4</p>
+<h3 id="2-2-用二进制数0、1表示状态">2.2 用二进制数0、1表示状态</h3>
+<p>二进制仅包含0、1，可用于表示状态，如元素是否被选取(1表示被选取，0表示未被选取)<br>
+例如对于数组nums={1,2,3,4},可以用(0101)表示选取元素2和4</p>
 <blockquote>
-<p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/subsets/">leetcode中等-子集</a><br>给你一个整数数组nums，数组中的元素互不相同。返回该数组所有可能的子集（幂集）。<br>解集不能包含重复的子集。你可以按任意顺序返回解集。<br>用二进制序列表示数值状态，并一一对应取出:</p>
+<p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/subsets/">leetcode中等-子集</a><br>
+给你一个整数数组nums，数组中的元素互不相同。返回该数组所有可能的子集（幂集）。<br>
+解集不能包含重复的子集。你可以按任意顺序返回解集。<br>
+用二进制序列表示数值状态，并一一对应取出:</p>
 <blockquote>
-<p>示例：<br>输入：nums = [1,2,3]<br>输出：[[],[1],[2],[1,2],[3],[1,3],[2,3],[1,2,3]]</p>
+<p>示例：<br>
+输入：nums = [1,2,3]<br>
+输出：[[],[1],[2],[1,2],[3],[1,3],[2,3],[1,2,3]]</p>
 </blockquote>
 </blockquote>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><code class="hljs cpp"><span class="hljs-comment">//核心部分</span><br><span class="hljs-comment">//长度为n的数组，需要长度为n的二进制码来表示每一位是否被选中</span><br><span class="hljs-comment">//长度为n的二进制码，对应十进制整数 1&lt;&lt;n</span><br>vector&lt;<span class="hljs-keyword">int</span>&gt; curStep;<br><span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> i=<span class="hljs-number">0</span>; i&lt; (<span class="hljs-number">1</span> &lt;&lt; n); ++i)&#123;<br>    curStep.<span class="hljs-built_in">clear</span>();<br>    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> j=<span class="hljs-number">0</span>; j&lt;n; ++j)<br>    &#123;<br>        <span class="hljs-keyword">if</span> (i &amp; (<span class="hljs-number">1</span> &lt;&lt; j)) &#123;<br>        <span class="hljs-comment">// i用于枚举，每次迭代仅选取i的二进制对应位为1的元素</span><br>        <span class="hljs-comment">// j用于遍历元素每一位，判断是否为1</span><br>            curStep.<span class="hljs-built_in">push_back</span>(nums[j]);<br>        &#125;<br>    &#125;<br>    ans.<span class="hljs-built_in">push_back</span>(curStep);<br>&#125;<br></code></pre></td></tr></table></figure>
-<p>补充解释：<br>例如nums={0,1,2,3,4,5}, 迭代到i=5=(000101)<br>此时j从0到5依次检查：i的二进制对应位是否为1<br>发现第1和第3位值为1，故此步迭代选出元素(0,2)</p>
+<p>补充解释：<br>
+例如nums={0,1,2,3,4,5}, 迭代到i=5=(000101)<br>
+此时j从0到5依次检查：i的二进制对应位是否为1<br>
+发现第1和第3位值为1，故此步迭代选出元素(0,2)</p>
 <blockquote>
 <p>注意二进制低位在右侧，而nums从左侧开计数</p>
 </blockquote>
-<h3 id="2-3-转化思想：建立映射关系"><a href="#2-3-转化思想：建立映射关系" class="headerlink" title="2.3 转化思想：建立映射关系"></a>2.3 转化思想：建立映射关系</h3><p>上文提到可用二进制表示元素选取状态，显然元素不限于数字<br>我们通过建立映射，尝试将位运算拓展至字符串</p>
+<h3 id="2-3-转化思想：建立映射关系">2.3 转化思想：建立映射关系</h3>
+<p>上文提到可用二进制表示元素选取状态，显然元素不限于数字<br>
+我们通过建立映射，尝试将位运算拓展至字符串</p>
 <blockquote>
-<p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/maximum-product-of-word-lengths/">leetcode中等-最大单词长度乘积</a><br>给定一个字符串数组words，找到length(word[i]) * length(word[j])的最大值，并且这两个单词不含有公共字母。你可以认为每个单词只包含小写字母。如果不存在这样的两个单词，返回0。</p>
+<p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/maximum-product-of-word-lengths/">leetcode中等-最大单词长度乘积</a><br>
+给定一个字符串数组words，找到length(word[i]) * length(word[j])的最大值，并且这两个单词不含有公共字母。你可以认为每个单词只包含小写字母。如果不存在这样的两个单词，返回0。</p>
 <blockquote>
-<p>输入: [“abcw”,”baz”,”foo”,”bar”,”xtfn”,”abcdef”]<br>输出: 16<br>解释: 这两个单词为”abcw”, “xtfn”。</p>
+<p>输入: [“abcw”,“baz”,“foo”,“bar”,“xtfn”,“abcdef”]<br>
+输出: 16<br>
+解释: 这两个单词为&quot;abcw&quot;, “xtfn”。</p>
 </blockquote>
 </blockquote>
-<p>思路：<br>可以令’a’=0，后续字母以’a’为偏移中心依次增加，char(‘b’)-‘a’=1, char(‘c’)-‘a’=2…<br>如此，实现了char与int的对应关系</p>
-<p>接着，考虑到共26个字母，因此使用26位二进制数即可表示相应字母是否被选中<br>如字符串”ab”, 对应二进制编码为(000…011)</p>
+<p>思路：<br>
+可以令’a’=0，后续字母以’a’为偏移中心依次增加，char(‘b’)-‘a’=1, char(‘c’)-‘a’=2…<br>
+如此，实现了char与int的对应关系</p>
+<p>接着，考虑到共26个字母，因此使用26位二进制数即可表示相应字母是否被选中<br>
+如字符串&quot;ab&quot;, 对应二进制编码为(000…011)</p>
 <p>最后，发现本题要求不能包含公共字母，转化为二进制数不能在同一位出现1，即a&amp;b=0</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><code class="hljs cpp"><span class="hljs-comment">//核心思想</span><br><span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> i=<span class="hljs-number">0</span>; i&lt;wordNums; i++)<br>&#123;<br>    states[i]=<span class="hljs-number">0</span>;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">int</span> j=<span class="hljs-number">0</span>; j&lt;words[i].<span class="hljs-built_in">size</span>(); j++)&#123;<br>        <span class="hljs-comment">//此处，将字母对应位置为1</span><br>        <span class="hljs-comment">//例如，&#x27;b&#x27;将第二位置1，&#x27;z&#x27;将第26位置1</span><br>        <span class="hljs-comment">//对应位=1，表示该字母被选中</span><br>        states[i] |= (<span class="hljs-number">1</span>&lt;&lt;(words[i][j] - <span class="hljs-string">&#x27;a&#x27;</span>));<br>    &#125;<br>&#125;<br><br><span class="hljs-comment">// 借助&amp;判断没有共同字母</span><br><span class="hljs-keyword">if</span> ((states[i] &amp; states[j]) == <span class="hljs-number">0</span>)&#123;...&#125;<br></code></pre></td></tr></table></figure>
-
-
-
-
-<h3 id="偷懒函数"><a href="#偷懒函数" class="headerlink" title="偷懒函数"></a>偷懒函数</h3><blockquote>
+<h3 id="偷懒函数">偷懒函数</h3>
+<blockquote>
 <p>__builtin_popcount(i)：计算一个32位无符号整数有多少个位为1</p>
 </blockquote>
-</div><ul class="post-copyright"><li class="post-copyright-author"><strong>Post author: </strong>郑叶平</li><li class="post-copyright-link"><strong>Post link: </strong><a href="https://wonderzyp.cn/2021/11/12/bit-manipulation/" title="leetocde-位运算">https://wonderzyp.cn/2021/11/12/bit-manipulation/</a></li><li class="post-copyright-license"><strong>Copyright Notice: </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" target="_blank" rel="noopener" title="CC BY-NC-SA 4.0 "><svg class="icon"><use xlink:href="#icon-creative-commons-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-by-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-nc-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-sa-line"></use></svg></a> unless otherwise stated.</li></ul></section></article><div class="post-nav"><div class="post-nav-item"></div><div class="post-nav-item"><a class="post-nav-next" href="/2021/11/07/psychology1/" rel="next" title="心理学笔记(1)：心理学是一门科学"><span class="post-nav-text">心理学笔记(1)：心理学是一门科学</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>要不要和我说些什么？</span><br></div></div></main><footer class="sidebar-translate" id="footer"><div class="copyright"><span>&copy; 2021 </span><span class="with-love" id="animate"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></span><span class="author"> 郑叶平</span></div><div class="powered"><span>Powered by <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> v5.4.0</span><span class="footer-separator">|</span><span>Theme - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.7.0</span></div><div class="live_time"><span>博主已暗戳戳陪着你</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+</div><ul class="post-copyright"><li class="post-copyright-author"><strong>Post author: </strong>公子平</li><li class="post-copyright-link"><strong>Post link: </strong><a href="https://wonderzyp.cn/2021/11/12/bit-manipulation/" title="leetocde-位运算">https://wonderzyp.cn/2021/11/12/bit-manipulation/</a></li><li class="post-copyright-license"><strong>Copyright Notice: </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" target="_blank" rel="noopener" title="CC BY-NC-SA 4.0 "><svg class="icon"><use xlink:href="#icon-creative-commons-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-by-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-nc-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-sa-line"></use></svg></a> unless otherwise stated.</li></ul></section></article><div class="post-nav"><div class="post-nav-item"></div><div class="post-nav-item"><a class="post-nav-next" href="/2021/11/07/psychology1/" rel="next" title="心理学笔记(1)：心理学是一门科学"><span class="post-nav-text">心理学笔记(1)：心理学是一门科学</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>要不要和我说些什么？</span><br></div></div></main><footer class="sidebar-translate" id="footer"><div class="copyright"><span>&copy; 2021 </span><span class="with-love" id="animate"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></span><span class="author"> 公子平</span></div><div class="powered"><span>Powered by <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> v5.4.0</span><span class="footer-separator">|</span><span>Theme - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.7.0</span></div><div class="live_time"><span>博主已暗戳戳陪着你</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
   setTimeout(blog_live_time, 1000);
   const start = new Date('2021-11-16T00:00:00');
   const now = new Date();

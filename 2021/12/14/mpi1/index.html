@@ -1,0 +1,136 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#0078E7"><meta name="author" content="公子平"><meta name="copyright" content="公子平"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>简单搭建MPI | 公子平的博客</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" type="image/svg+xml" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#0078E7"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"wonderzyp.cn","root":"/","title":"公子平的小站","version":"1.7.0","mode":"light","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}.","hits":"${hits} results found","hits_time":"${hits} results found in ${time} ms"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"/data/sentences.json"},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><meta name="description" content="本文介绍通过SSH连接两台电脑，并成功运行MPI案例">
+<meta property="og:type" content="article">
+<meta property="og:title" content="简单搭建MPI">
+<meta property="og:url" content="https://wonderzyp.cn/2021/12/14/mpi1/index.html">
+<meta property="og:site_name" content="公子平的博客">
+<meta property="og:description" content="本文介绍通过SSH连接两台电脑，并成功运行MPI案例">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://wonderzyp.cn/2021/12/14/mpi1/1.png">
+<meta property="og:image" content="https://wonderzyp.cn/2021/12/14/mpi1/2.png">
+<meta property="article:published_time" content="2021-12-14T09:32:11.000Z">
+<meta property="article:modified_time" content="2021-12-14T09:44:44.142Z">
+<meta property="article:author" content="公子平">
+<meta property="article:tag" content="MPI">
+<meta property="article:tag" content="高性能计算">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://wonderzyp.cn/2021/12/14/mpi1/1.png"></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="Table of Contents"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="Overview"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="公子平"><img width="96" loading="lazy" src="/yun.png" alt="公子平"></a><div class="site-author-name"><a href="/about/">公子平</a></div><span class="site-name">公子平的博客</span><sub class="site-subtitle">兴趣：高性能计算、C++、人文社科</sub><div class="site-desciption"></div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="Home"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="Archives"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">11</span></a></div><div class="site-state-item"><a href="/categories/" title="Categories"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">5</span></a></div><div class="site-state-item"><a href="/tags/" title="Tags"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">8</span></a></div><a class="site-state-item hty-icon-button" href="https://wonderzyp.cn/" title="文档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-settings-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/wonderzyp" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.douban.com/people/wonderzyp/" title="豆瓣" target="_blank" style="color:#007722"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-douban-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/ping-ge-48" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="mailto:2671078523@qq.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a></div></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#MPI%E7%AE%80%E4%BB%8B"><span class="toc-text">MPI简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E6%98%93MPI%E6%90%AD%E5%BB%BA"><span class="toc-text">简易MPI搭建</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E9%80%9A%E8%BF%87SSH%E8%BF%9E%E6%8E%A5%E4%B8%A4%E5%8F%B0%E7%94%B5%E8%84%91"><span class="toc-text">1 通过SSH连接两台电脑</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-SSH%E7%AE%80%E4%BB%8B"><span class="toc-text">1.1 SSH简介</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-ssh%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="toc-text">1.2 ssh配置文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-3-sshd%E7%9A%84%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="toc-text">1.3 sshd的配置文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-4-%E7%94%9F%E6%88%90%E5%85%AC%E9%92%A5"><span class="toc-text">1.4 生成公钥</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E8%AE%BE%E7%BD%AENFS%E6%8C%82%E8%BD%BD%E6%96%87%E4%BB%B6"><span class="toc-text">2 设置NFS挂载文件</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-NFS%E6%9C%8D%E5%8A%A1%E7%AB%AF%E9%85%8D%E7%BD%AE"><span class="toc-text">2.1 NFS服务端配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-NFS%E5%AE%A2%E6%88%B7%E7%AB%AF%E9%85%8D%E7%BD%AE"><span class="toc-text">2.2 NFS客户端配置</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E8%BF%90%E8%A1%8Cmpirun"><span class="toc-text">3 运行mpirun</span></a></li></ol></div></div></div><div class="tag-cloud"><div class="tag-cloud-tags"><a href="/tags/C/" style="font-size: 21px; color: #4d89c0">C++</a> <a href="/tags/CUDA/" style="font-size: 21px; color: #4d89c0">CUDA</a> <a href="/tags/MPI/" style="font-size: 12px; color: #999">MPI</a> <a href="/tags/OpenMP/" style="font-size: 21px; color: #4d89c0">OpenMP</a> <a href="/tags/%E5%BF%83%E7%90%86%E5%AD%A6/" style="font-size: 12px; color: #999">心理学</a> <a href="/tags/%E6%95%B0%E7%90%86%E5%9F%BA%E7%A1%80/" style="font-size: 12px; color: #999">数理基础</a> <a href="/tags/%E7%AE%97%E6%B3%95/" style="font-size: 12px; color: #999">算法</a> <a href="/tags/%E9%AB%98%E6%80%A7%E8%83%BD%E8%AE%A1%E7%AE%97/" style="font-size: 30px; color: #0078e7">高性能计算</a></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://wonderzyp.cn/2021/12/14/mpi1/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="公子平"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="公子平的博客"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">简单搭建MPI</h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="Created: 2021-12-14 17:32:11" itemprop="dateCreated datePublished" datetime="2021-12-14T17:32:11+08:00">2021-12-14</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="Word count in article"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="Word count in article">1.1k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="Reading time"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="Reading time">4m</span></span></span><span class="post-busuanzi"><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="Views"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-eye-line"></use></svg> <span id="busuanzi_value_page_pv"></span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/HPC/" style="--text-color:/categories/HPC" itemprop="url" rel="index"><span itemprop="text">HPC</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/MPI/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">MPI</span></a><a class="tag-item" href="/tags/%E9%AB%98%E6%80%A7%E8%83%BD%E8%AE%A1%E7%AE%97/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">高性能计算</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#0078E7;"><p>本文介绍通过SSH连接两台电脑，并成功运行MPI案例</p>
+<span id="more"></span>
+<h2 id="MPI简介">MPI简介</h2>
+<p>MPI是一个通讯协议，可实现多台机器的并行计算。<br>
+举个简单的例子，假设有两台电脑(P1和P2)，现需要计算1+2+…+100。<br>
+我们可以令P1计算(sum1=1+…+50)，P2执行(sum2=51+…+100)，最后通过MPI将P2的运算结果sum2传回P1，P1再执行sum1+=sum2即可得出最终结果。</p>
+<p><strong>为什么需要MPI呢？</strong><br>
+做个极端理想假设，每台电脑计算50个加法所需时间为$T$，则在一台电脑上需$2T$的时间完成计算。<br>
+使用MPI后，P1和P2是<strong>同时</strong>计算的，设MPI通信耗时为$a$,则最终时间为$T+a$<br>
+一般MPI的通信耗时$a$远远小于单台机器的计算用时$T$<br>
+因此，<strong>MPI通过并行，显著降低运算时间</strong></p>
+<h2 id="简易MPI搭建">简易MPI搭建</h2>
+<p>实验环境：两台Linux虚拟机（<strong>同一局域网</strong>下两台Linux电脑亦可）</p>
+<h2 id="1-通过SSH连接两台电脑">1 通过SSH连接两台电脑</h2>
+<p>注：两台电脑默认在同一局域网内，否则彼此间无法访问</p>
+<h3 id="1-1-SSH简介">1.1 SSH简介</h3>
+<ol>
+<li>连接时两台电脑分别为服务端和客户端，一般Ubuntu自带openssh-client，即客户端软件，充当服务端的电脑需执行apt install openssh-server安装openssh-server</li>
+<li>客户端执行ssh-keygen生成密钥对，一直按enter的话，默认生成在路径./ssh内，可通过cd ~/.ssh进入</li>
+<li>该目录下两个文件id_rsa、id_rsa.pub；前者为私钥，放在客户端，后者为公钥(public)，应放在服务器端，(我是用U盘拷贝到服务器的)</li>
+</ol>
+<h3 id="1-2-ssh配置文件">1.2 ssh配置文件</h3>
+<ol>
+<li>cd /etc/ssh，移动到对应目录，运行ls，其中客户端配置文件为ssh_config, 服务器端为sshd_config</li>
+<li>一般ssh_config使用默认配置即可</li>
+</ol>
+<h3 id="1-3-sshd的配置文件">1.3 sshd的配置文件</h3>
+<ol>
+<li>使用vim打开sshd_config文件，按i进入编辑模式，找到以下对应设置并更改，注意删除对应的前面#</li>
+</ol>
+<pre class="language-vim" data-language="vim"><code class="language-vim">Port <span class="token number">22</span>	端口号，服务器和客户端相同即可
+ListenAddress <span class="token number">0.0</span><span class="token operator">.</span><span class="token number">0.0</span>	打开监听所有端口
+PermitRootLogin yes	允许远程客户进入根权限
+PublicAuthentication yes 打开密钥对认证模式
+AuthorizedKeysFile <span class="token operator">.</span>ssh<span class="token operator">/</span>yourname<span class="token operator">.</span>pub 名称为yourname<span class="token operator">.</span>pub的公钥放置处
+PasswordAuthentication yes 需要密码认证
+PermitEmptyPasswords yes 不允许空密码</code></pre>
+<ol start="2">
+<li>esc, :x, 完成配置。注意x小写，大写的X是加密文件😄</li>
+<li>重新启动ssh、sshd</li>
+</ol>
+<pre class="language-bash" data-language="bash"><code class="language-bash">server <span class="token function">ssh</span> restart
+server sshd restart</code></pre>
+<h3 id="1-4-生成公钥">1.4 生成公钥</h3>
+<p>以下操作<strong>两台电脑</strong>都需要依次执行：</p>
+<ol>
+<li>添加相同用户：adduser mpi，su mpi切换至mpi用户</li>
+<li>运行ssh-keygen -t rsa，在<sub>/.ssh目录下出现后缀名为.pub的文件，将其复制到另一台电脑的</sub>/.ssh目录下，注意文件名称需与sshd_config中设置一致</li>
+<li>运行ifconfig，查看每台的电脑IP<br>
+<img src="1.png" alt="1" loading="lazy"></li>
+<li>运行vim /etc/hosts，给IP地址赋别名<br>
+<img src="2.png" alt="2" loading="lazy"><br>
+两台电脑hosts文件的设置相同</li>
+<li>在IP地址为node1的电脑上，运行ssh node2尝试连接node2；反之亦然</li>
+</ol>
+<blockquote>
+<p>补充：建议passwd -d mpi将mpi用户的密码删除(如果后续连接不上的话😄)</p>
+</blockquote>
+<h2 id="2-设置NFS挂载文件">2 设置NFS挂载文件</h2>
+<p>两台电脑需区分服务器端和客户端，在服务器端创建共享文件夹，将需要共享的文件放于此文件夹内</p>
+<pre class="language-bash" data-language="bash"><code class="language-bash"><span class="token function">mkdir</span> ~/mpi/cloud</code></pre>
+<blockquote>
+<p>服务端与客户端两者文件位置应一致，方便后续运行mpi</p>
+</blockquote>
+<h3 id="2-1-NFS服务端配置">2.1 NFS服务端配置</h3>
+<ol>
+<li>sudo apt install nfs-kernel-server</li>
+<li>vim /etc/exports，在最后一行添加：</li>
+</ol>
+<pre class="language-vim" data-language="vim"><code class="language-vim"><span class="token operator">/</span>home<span class="token operator">/</span>mpi<span class="token operator">/</span>cloud <span class="token operator">*</span><span class="token punctuation">(</span>rw<span class="token punctuation">,</span>sync<span class="token punctuation">,</span>no_root_squash<span class="token punctuation">,</span>no_subtree_check<span class="token punctuation">)</span></code></pre>
+<ol start="3">
+<li>命令行运行exportfs -a</li>
+<li>刷新服务 sudo service nfs-kernel-server restart</li>
+</ol>
+<h3 id="2-2-NFS客户端配置">2.2 NFS客户端配置</h3>
+<ol>
+<li>sudo apt-get install nfs-common</li>
+<li>mkdir cloud</li>
+<li>sudo mount -t nfs node1:/home/mpiuser/cloud ~/cloud</li>
+<li>df -h可查询是否成功挂载</li>
+</ol>
+<p>此时在客户端应该能够看到服务端的共享文件</p>
+<blockquote>
+<p>注：node1为自己在hosts文件中定义的服务端IP别名</p>
+</blockquote>
+<h2 id="3-运行mpirun">3 运行mpirun</h2>
+<p>默认将编译成功的可执行文件(本案例文件名为test)置于共享文件夹cloud中，移动至该目录下执行：</p>
+<pre class="language-bash" data-language="bash"><code class="language-bash">mpirun -np <span class="token number">4</span> -host node1,node2 ./test</code></pre>
+<p>其中:</p>
+<ul>
+<li>-np 4：表明调用4个进程</li>
+<li>-host node1,node2：指定两台机器的IP地址</li>
+</ul>
+</div><ul class="post-copyright"><li class="post-copyright-author"><strong>Post author: </strong>公子平</li><li class="post-copyright-link"><strong>Post link: </strong><a href="https://wonderzyp.cn/2021/12/14/mpi1/" title="简单搭建MPI">https://wonderzyp.cn/2021/12/14/mpi1/</a></li><li class="post-copyright-license"><strong>Copyright Notice: </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" target="_blank" rel="noopener" title="CC BY-NC-SA 4.0 "><svg class="icon"><use xlink:href="#icon-creative-commons-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-by-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-nc-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-sa-line"></use></svg></a> unless otherwise stated.</li></ul></section></article><div class="post-nav"><div class="post-nav-item"></div><div class="post-nav-item"><a class="post-nav-next" href="/2021/12/14/openmp/openmp2/" rel="next" title="OpenMP(2)——入门"><span class="post-nav-text">OpenMP(2)——入门</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>欢迎留言呀！</span><br></div><style>.utterances {
+  max-width: 100%;
+}</style><script src="https://utteranc.es/client.js" repo="wonderzyp/blogtalks" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script></div></main><footer class="sidebar-translate" id="footer"><div class="copyright"><span>&copy; 2021 </span><span class="with-love" id="animate"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></span><span class="author"> 公子平</span></div><div class="powered"><span>Powered by <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> v5.4.0</span><span class="footer-separator">|</span><span>Theme - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.7.0</span></div><div class="live_time"><span>公子平已陪着你</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2021-11-16T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div><div id="busuanzi"><span id="busuanzi_container_site_uv" title="Total Visitors"><span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-user-line"></use></svg></span><span id="busuanzi_value_site_uv"></span></span><span class="footer-separator">|</span><span id="busuanzi_container_site_pv" title="Total Views"><span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-eye-line"></use></svg></span><span id="busuanzi_value_site_pv"></span></span><script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#0078E7" stroke-width="2" stroke-linecap="round"></circle></svg></a></div></body></html>

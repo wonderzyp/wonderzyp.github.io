@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)">
+<meta name="generator" content="Hexo 5.4.0">
+
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/apple-touch-icon-next.png" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"wonderzyp.cn","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.8.2","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":true,"nav":{"utterances":{"text":"Load utterances"}},"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="程序并行化需针对不同的硬件平台编写特定的代码，极大增加了编程工作量。 针对并行计算移植性差的这一痛点，VTK-m框架提供解决方案，实现了一份代码多平台通用。 本文基于VTKm框架实现雪花分型案例：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="VTKm实现雪花分型案例">
+<meta property="og:url" content="https://wonderzyp.cn/2022/01/03/cpp/snow/index.html">
+<meta property="og:site_name" content="公子平的博客">
+<meta property="og:description" content="程序并行化需针对不同的硬件平台编写特定的代码，极大增加了编程工作量。 针对并行计算移植性差的这一痛点，VTK-m框架提供解决方案，实现了一份代码多平台通用。 本文基于VTKm框架实现雪花分型案例：">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2022-01-03T08:04:05.000Z">
+<meta property="article:modified_time" content="2022-01-03T08:26:45.420Z">
+<meta property="article:author" content="公子平">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="VTKm">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://wonderzyp.cn/2022/01/03/cpp/snow/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://wonderzyp.cn/2022/01/03/cpp/snow/","path":"2022/01/03/cpp/snow/","title":"VTKm实现雪花分型案例"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>VTKm实现雪花分型案例 | 公子平的博客</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">公子平的博客</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">高性能计算、C++、人文社科</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-text">0 VTKm框架简介</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-text">1 雪花分型概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-text">2 VTKm框架实现</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#2-1-Run"><span class="nav-text">2.1 Run()</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-2-worklet"><span class="nav-text">2.2 worklet</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-1-worklet%E6%98%AF%E4%B8%80%E4%B8%AAfunctor"><span class="nav-text">2.2.1 worklet是一个functor</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-2-worklet%E5%9F%BA%E6%9C%AC%E6%9E%84%E6%88%90"><span class="nav-text">2.2.2 worklet基本构成</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-ControlSignature"><span class="nav-text">(1) ControlSignature</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-ExecutionSignature"><span class="nav-text">(2) ExecutionSignature</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-operator"><span class="nav-text">(3) operator()</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-3-%E8%87%AA%E5%AE%9A%E4%B9%89worklet"><span class="nav-text">2.2.3 自定义worklet</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-ControlSignature-Tags"><span class="nav-text">(1) ControlSignature Tags</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#TypeCheck"><span class="nav-text">TypeCheck</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Transport"><span class="nav-text">Transport</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Fetch"><span class="nav-text">Fetch</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-ExecutionSignature-Tags"><span class="nav-text">(2) ExecutionSignature Tags</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#AspectTagLineFractalTransform"><span class="nav-text">AspectTagLineFractalTransform</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ThreadIndicesLineFractal"><span class="nav-text">ThreadIndicesLineFractal</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#LineFractalTransform"><span class="nav-text">LineFractalTransform</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-4-%E5%AE%9A%E4%B9%89worklet%E7%9A%84%E9%87%8D%E8%BD%BD%E8%BF%90%E7%AE%97%E7%AC%A6"><span class="nav-text">2.2.4 定义worklet的重载运算符</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="公子平"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">公子平</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">15</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wonderzyp" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wonderzyp" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:2671078523@qq.com" title="E-Mail → mailto:2671078523@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://wonderzyp.cn/2022/01/03/cpp/snow/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="公子平">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="公子平的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          VTKm实现雪花分型案例
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2022-01-03 16:04:05 / Modified: 16:26:45" itemprop="dateCreated datePublished" datetime="2022-01-03T16:04:05+08:00">2022-01-03</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>程序并行化需针对不同的硬件平台编写特定的代码，极大增加了编程工作量。<br>
+针对并行计算移植性差的这一痛点，VTK-m框架提供解决方案，实现了<strong>一份代码多平台通用。</strong><br>
+本文基于VTKm框架实现雪花分型案例：</p>
+<center class="half">
+    <img src=/pic/exam.png/>
+</center>
+<span id="more"></span>
+<p><strong>源码：</strong></p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/wonderzyp/KochSnowflake">github</a></li>
+<li><a target="_blank" rel="noopener" href="https://gitee.com/wonderzyp/KochSnowflake">gitee</a></li>
+</ul>
+<h1>0 VTKm框架简介</h1>
+<p>VTKm是Kitware公司(就是整出CMake的公司😄)旗下产品，<a target="_blank" rel="noopener" href="https://m.vtk.org/">VTKm官网</a>称其为: A toolkit of SCIENTIFIC VISUALIZATION ALGORITHMS for emerging processor architectures。<br>
+虽然官方定位是可视化软件，但我们可将其用作程序中的一个模块，实现特定部分的<strong>并行化</strong>，并可保证程序在<strong>多平台通用</strong>。<a target="_blank" rel="noopener" href="https://gitlab.kitware.com/vtk/vtk-m-user-guide/-/wikis/home">官方用户手册</a>中也曾提到过这一点。</p>
+<h1>1 雪花分型概述</h1>
+<center class="half">
+    <img src=/pic/snowiter1.png/>
+    <center>图(1) 分型迭代1次</center>
+</center>
+<center class="half">
+    <img src=./pic/snowiter2.png/>
+    <center>图(2) 分型迭代2次</center>
+</center>
+<p>如上图所示，图(2)是在图(1)基础上迭代得到<br>
+以图(1)圈出的局部直线为例，迭代一次后变为图(2)中的局部四条直线<br>
+因此每一步迭代：<strong>输入为一条直线，输出为4条直线</strong></p>
+<hr>
+<h1>2 VTKm框架实现</h1>
+<h2 id="2-1-Run">2.1 Run()</h2>
+<p>Run()函数接受参数numIterations，控制进行的迭代次数</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">VTKM_CONT <span class="token keyword">static</span> vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>ArrayHandle<span class="token operator">&lt;</span>vtkm<span class="token double-colon punctuation">::</span>Vec2f<span class="token operator">></span> <span class="token function">Run</span><span class="token punctuation">(</span>
+    vtkm<span class="token double-colon punctuation">::</span>IdComponent numIterations<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+        vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>ArrayHandle<span class="token operator">&lt;</span>vtkm<span class="token double-colon punctuation">::</span>Vec2f<span class="token operator">></span> points<span class="token punctuation">;</span>
+
+        points<span class="token punctuation">.</span><span class="token function">Allocate</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        points<span class="token punctuation">.</span><span class="token function">WritePortal</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Set</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span>vtkm<span class="token double-colon punctuation">::</span><span class="token function">Vec2f</span><span class="token punctuation">(</span><span class="token number">0.0f</span><span class="token punctuation">,</span> <span class="token number">0.0f</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        points<span class="token punctuation">.</span><span class="token function">WritePortal</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Set</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> vtkm<span class="token double-colon punctuation">::</span><span class="token function">Vec2f</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">,</span> <span class="token number">0.0f</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>Invoker invoke<span class="token punctuation">;</span>
+        KochSnowflake<span class="token double-colon punctuation">::</span>FractalWorklet worklet<span class="token punctuation">;</span>
+
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>vtkm<span class="token double-colon punctuation">::</span>IdComponent i<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span> i<span class="token operator">&lt;</span>numIterations<span class="token punctuation">;</span> <span class="token operator">++</span>i<span class="token punctuation">)</span>
+        <span class="token punctuation">&#123;</span>
+            vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>ArrayHandle<span class="token operator">&lt;</span>vtkm<span class="token double-colon punctuation">::</span>Vec2f<span class="token operator">></span> outPoints<span class="token punctuation">;</span>
+            <span class="token function">invoke</span><span class="token punctuation">(</span>worklet<span class="token punctuation">,</span> points<span class="token punctuation">,</span> outPoints<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            points<span class="token operator">=</span>outPoints<span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">return</span> points<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span></code></pre>
+<p>上述代码使用数组points存储数据点，且初始化为{(0,0),(0,1)}<br>
+在for循环内部，以points数组为输入，输出至outpoints数组，并使用outpoints更新points数组</p>
+<p>此处invoke函数的第一个参数worklet，控制分型的具体实现细节</p>
+<blockquote>
+<p>invoke()函数可以理解为唤醒worklet，将points作为参数传递给worklet，并得到worklet的输出outpoints</p>
+</blockquote>
+<h2 id="2-2-worklet">2.2 worklet</h2>
+<p>VTKm框架内置部分worklet，本案例为了进一步阐述worklet原理，实现自定义worklet</p>
+<h3 id="2-2-1-worklet是一个functor">2.2.1 worklet是一个functor</h3>
+<p>在C++中，如果定义类的时重载括号运算符，则可以向调用函数一样使用这个类</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">absInt</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token comment">//省去构造析构等</span>
+    <span class="token keyword">int</span> <span class="token keyword">operator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token keyword">int</span> val<span class="token punctuation">)</span><span class="token punctuation">&#123;</span><span class="token keyword">return</span> val<span class="token operator">&lt;</span><span class="token number">0</span><span class="token operator">?</span> <span class="token operator">-</span>val <span class="token operator">:</span> val<span class="token punctuation">;</span><span class="token punctuation">&#125;</span> 
+<span class="token punctuation">&#125;</span>
+absInt a<span class="token punctuation">;</span>
+<span class="token keyword">int</span> i<span class="token operator">=</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+<span class="token keyword">int</span> ui<span class="token operator">=</span><span class="token function">a</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//a是一个absInt类，但可以像函数一样调用</span></code></pre>
+<h3 id="2-2-2-worklet基本构成">2.2.2 worklet基本构成</h3>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">struct</span> <span class="token class-name">FractalWorklet</span> <span class="token operator">:</span> <span class="token base-clause">vtkm<span class="token double-colon punctuation">::</span>worklet<span class="token double-colon punctuation">::</span><span class="token class-name">myWorklet</span></span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">using</span> ControlSignature<span class="token operator">=</span><span class="token keyword">void</span><span class="token punctuation">(</span>SegmentsIn<span class="token punctuation">,</span> SegmentsOut<span class="token operator">&lt;</span><span class="token number">4</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> ExecutionSignature<span class="token operator">=</span><span class="token keyword">void</span><span class="token punctuation">(</span>Transform<span class="token punctuation">,</span> _2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> InputDomain<span class="token operator">=</span>_1<span class="token punctuation">;</span>
+
+    <span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">SegmentsOutVecType</span><span class="token operator">></span>
+    <span class="token keyword">void</span> <span class="token keyword">operator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token keyword">const</span> vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>LineFractalTransform<span class="token operator">&amp;</span> transform<span class="token punctuation">,</span> SegmentsOutVecType<span class="token operator">&amp;</span> segmentsOutVec<span class="token punctuation">)</span> <span class="token keyword">const</span>
+    <span class="token punctuation">&#123;</span>
+        <span class="token comment">//...</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<p>我们着重关注三个环节：<br>
+ControlSignature, ExecutionSignature和重载的operator()</p>
+<h4 id="1-ControlSignature">(1) ControlSignature</h4>
+<p>ControlSignature的参数与前面的invoke函数参数一一对应</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">using</span> ControlSignature<span class="token operator">=</span><span class="token keyword">void</span><span class="token punctuation">(</span>SegmentsIn<span class="token punctuation">,</span> SegmentsOut<span class="token operator">&lt;</span><span class="token number">4</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">invoke</span><span class="token punctuation">(</span>worklet<span class="token punctuation">,</span> points<span class="token punctuation">,</span> outPoints<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>points对应SegmentsIn, outPoints对应SegmentsOut&lt;4&gt;</p>
+<h4 id="2-ExecutionSignature">(2) ExecutionSignature</h4>
+<p>ExecutionSignature与ControlSignature参数<strong>相关联</strong>，并与operator()参数<strong>一一对应</strong></p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">using</span> ControlSignature<span class="token operator">=</span><span class="token keyword">void</span><span class="token punctuation">(</span>SegmentsIn<span class="token punctuation">,</span> SegmentsOut<span class="token operator">&lt;</span><span class="token number">4</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">using</span> ExecutionSignature<span class="token operator">=</span><span class="token keyword">void</span><span class="token punctuation">(</span>Transform<span class="token punctuation">,</span> _2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">void</span> <span class="token keyword">operator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token keyword">const</span> vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>LineFractalTransform<span class="token operator">&amp;</span> transform<span class="token punctuation">,</span> SegmentsOutVecType<span class="token operator">&amp;</span> segmentsOutVec<span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">&#123;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">&#125;</span></code></pre>
+<p>其中，_2表示对应ControlSignature的第二个参数SegmentsOut&lt;4&gt;<br>
+且(Transform, _2)与operator()参数类型严格匹配</p>
+<h4 id="3-operator">(3) operator()</h4>
+<p>operator()是具体实现的环节，文章在后面会详细解释</p>
+<p>至此，我们粗略了解VTKm使用逻辑，但依旧不清楚SegmentsIn, SegmentsOut&lt;4&gt;和Transform等意义。<br>
+本文将在接下来的自定义worklet环节具体介绍。</p>
+<h3 id="2-2-3-自定义worklet">2.2.3 自定义worklet</h3>
+<p>本章主要介绍worklet的关键环节：<br>
+自定义ControlSignature Tags：SegmentsIn, SegmentsOut&lt;4&gt;<br>
+自定义ExecutionSignature Tags：Transform</p>
+<h4 id="1-ControlSignature-Tags">(1) ControlSignature Tags</h4>
+<p>本案例自定义SegmentsIn和SegmentsOut两个ControlSignature Tags</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//自定义ControlSignature Tags</span>
+<span class="token keyword">struct</span> <span class="token class-name">SegmentsIn</span> <span class="token operator">:</span> <span class="token base-clause">vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span><span class="token class-name">ControlSignatureTagBase</span></span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">using</span> TypeCheckTag <span class="token operator">=</span> vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>TypeCheckTag2DCoordinates<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> TransportTag <span class="token operator">=</span> vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>TransportTag2DLineSegmentsIn<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> FetchTag <span class="token operator">=</span> vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>FetchTag2DLineSegmentsIn<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">template</span><span class="token operator">&lt;</span>vtkm<span class="token double-colon punctuation">::</span>IdComponent NumSegments<span class="token operator">></span>
+<span class="token keyword">struct</span> <span class="token class-name">SegmentsOut</span> <span class="token operator">:</span> <span class="token base-clause">vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span><span class="token class-name">ControlSignatureTagBase</span></span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">using</span> TypeCheckTag <span class="token operator">=</span> vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>TypeCheckTag2DCoordinates<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> TransportTag <span class="token operator">=</span> vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>TransportTag2DLineSegmentsOut<span class="token operator">&lt;</span>NumSegments<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> FetchTag <span class="token operator">=</span> vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>FetchTagArrayDirectOut<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<p>从上述代码可知，ControlSignature Tags包含三个步骤：</p>
+<ol>
+<li>类型检查：TypeCheck</li>
+<li>传输：TransportTag</li>
+<li>分发：Fetch</li>
+</ol>
+<h5 id="TypeCheck">TypeCheck</h5>
+<p>检查类型，<strong>只接受</strong>内部参数为vtkm::Vec2f_32和vtkm::Vec2f_64的arrayHandle。即数组内部元素必须为二维点，如points={(0,0),(1,0)}</p>
+<h5 id="Transport">Transport</h5>
+<p>VTKm将数据划分为两个环境：<strong>控制环境</strong>和<strong>执行环境</strong><br>
+由于每个环境有自己的API，且彼此间<strong>不允许直接交互</strong><br>
+我们定义的points和outpoint数组均为控制环境中的对象，而实际计算时需在执行环境中进行</p>
+<blockquote>
+<p>Transport实现对象在两环境之间的转化</p>
+</blockquote>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//2. Transport</span>
+<span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">ContObjectType</span><span class="token punctuation">,</span> <span class="token keyword">typename</span> <span class="token class-name">Device</span><span class="token operator">></span>
+<span class="token keyword">struct</span> <span class="token class-name">Transport</span><span class="token operator">&lt;</span>vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>TransportTag2DLineSegmentsIn<span class="token punctuation">,</span>
+				ContObjectType<span class="token punctuation">,</span>
+				Device<span class="token operator">></span>
+<span class="token punctuation">&#123;</span>
+	<span class="token keyword">using</span> GroupedArrayType <span class="token operator">=</span> vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>ArrayHandleGroupVec<span class="token operator">&lt;</span>ContObjectType<span class="token punctuation">,</span> <span class="token number">2</span><span class="token operator">></span><span class="token punctuation">;</span>
+	<span class="token keyword">using</span> ExecObjectType <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">GroupedArrayType</span><span class="token double-colon punctuation">::</span>ReadPortalType<span class="token punctuation">;</span>
+
+	<span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">InputDomainType</span><span class="token operator">></span>
+	VTKM_CONT ExecObjectType <span class="token keyword">operator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token keyword">const</span> ContObjectType<span class="token operator">&amp;</span> object<span class="token punctuation">,</span>
+		<span class="token keyword">const</span> InputDomainType<span class="token operator">&amp;</span><span class="token punctuation">,</span>
+		vtkm<span class="token double-colon punctuation">::</span>Id inputRange<span class="token punctuation">,</span>
+		vtkm<span class="token double-colon punctuation">::</span>Id<span class="token punctuation">,</span>
+		vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>Token<span class="token operator">&amp;</span> token<span class="token punctuation">)</span> <span class="token keyword">const</span>
+	<span class="token punctuation">&#123;</span>
+		<span class="token comment">//GroupedArrayType将array中每两个点进行配对，以表示直线</span>
+		GroupedArrayType <span class="token function">groupedArray</span><span class="token punctuation">(</span>object<span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token keyword">return</span> groupedArray<span class="token punctuation">.</span><span class="token function">PrepareForInput</span><span class="token punctuation">(</span>Device<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span> token<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<p>operator()的输入类型是控制环境对象ContObjectType，输出类型是执行环境对象ExecObjectType，实现对象转化。</p>
+<p>同时，operator()将ContObject内部元素两两打包<br>
+ContObject内部元素是二维点，两点构成一条直线，因此ExecObject内部元素是线</p>
+<blockquote>
+<p>例如：ContObject={(0,0),(0.5,0),(0.5,0),(1,0)}，表示四个点<br>
+则ExecObject={((0,0),(0.5,0), (0.5,0),(1,0))}，表示两条线</p>
+</blockquote>
+<h5 id="Fetch">Fetch</h5>
+<p>Fetch将数组元素分配至不同线程中，实现<strong>不同线程处理不同数组元素</strong></p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">ExecObjectType</span><span class="token operator">></span>
+<span class="token keyword">struct</span> <span class="token class-name">Fetch</span><span class="token operator">&lt;</span>vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>FetchTag2DLineSegmentsIn<span class="token punctuation">,</span> vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>AspectTagDefault<span class="token punctuation">,</span> ExecObjectType<span class="token operator">></span>
+<span class="token punctuation">&#123;</span>
+	<span class="token keyword">using</span> ValueType <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">ExecObjectType</span><span class="token double-colon punctuation">::</span>ValueType<span class="token punctuation">;</span>
+	VTKM_SUPPRESS_EXEC_WARNINGS
+	<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">ThreadIndicesType</span><span class="token operator">></span>
+	VTKM_EXEC ValueType <span class="token function">Load</span><span class="token punctuation">(</span><span class="token keyword">const</span> ThreadIndicesType<span class="token operator">&amp;</span> indices<span class="token punctuation">,</span>
+		<span class="token keyword">const</span> ExecObjectType<span class="token operator">&amp;</span> arrayPortal<span class="token punctuation">)</span> <span class="token keyword">const</span>
+	<span class="token punctuation">&#123;</span>
+		<span class="token keyword">return</span> arrayPortal<span class="token punctuation">.</span><span class="token function">Get</span><span class="token punctuation">(</span>indices<span class="token punctuation">.</span><span class="token function">GetInputIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<p>重点关注return函数，各个线程通过各自的线程号，实现访问特定数组元素。</p>
+<blockquote>
+<p>一个线程管一条局部直线</p>
+</blockquote>
+<h4 id="2-ExecutionSignature-Tags">(2) ExecutionSignature Tags</h4>
+<p>本案例仅自定义一个ExecutionSignature Tag: Transform<br>
+涉及关键环节：</p>
+<ol>
+<li>自定义线程类</li>
+<li>自定义AspectTag</li>
+<li>自定义LineFractalTransform类</li>
+</ol>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//自定义ExecutionSignature Tags</span>
+<span class="token keyword">struct</span> <span class="token class-name">Transform</span> <span class="token operator">:</span> <span class="token base-clause">vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span><span class="token class-name">ExecutionSignatureTagBase</span></span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">static</span> <span class="token keyword">const</span> vtkm<span class="token double-colon punctuation">::</span>IdComponent INDEX <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> AspectTag <span class="token operator">=</span> vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>AspectTagLineFractalTransform<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<p>自定义的Transform需继承自ExecutionSignatureTagBase，并使用自定义的AspectTagLineFractalTransform</p>
+<h5 id="AspectTagLineFractalTransform">AspectTagLineFractalTransform</h5>
+<blockquote>
+<p>定义AspectTag旨在对传入的数据进行<strong>加工修饰</strong></p>
+</blockquote>
+<p>通过线程索引得到两个点GetPoint0和GetPoint1，返回类型是自定义的LineFractalTransform<br>
+可以理解为自定义的AspectTag对输入数据进行了加工，通过两点创建了一个类</p>
+<blockquote>
+<p>注意此处执行环境是VTKM_EXEC</p>
+</blockquote>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//核心代码</span>
+<span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">FetchTag</span><span class="token punctuation">,</span> <span class="token keyword">typename</span> <span class="token class-name">ExecObjectType</span><span class="token operator">></span>
+<span class="token keyword">struct</span> <span class="token class-name">Fetch</span><span class="token operator">&lt;</span>FetchTag<span class="token punctuation">,</span> vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>AspectTagLineFractalTransform<span class="token punctuation">,</span> ExecObjectType<span class="token operator">></span>
+<span class="token punctuation">&#123;</span>
+	<span class="token keyword">using</span> ValueType <span class="token operator">=</span> LineFractalTransform<span class="token punctuation">;</span>
+
+	VTKM_SUPPRESS_EXEC_WARNINGS
+	VTKM_EXEC ValueType <span class="token function">Load</span><span class="token punctuation">(</span><span class="token keyword">const</span> vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>ThreadIndicesLineFractal<span class="token operator">&amp;</span> indices<span class="token punctuation">,</span>
+		<span class="token keyword">const</span> ExecObjectType<span class="token operator">&amp;</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+	<span class="token punctuation">&#123;</span>
+		<span class="token keyword">return</span> <span class="token function">ValueType</span><span class="token punctuation">(</span>indices<span class="token punctuation">.</span><span class="token function">GetPoint0</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> indices<span class="token punctuation">.</span><span class="token function">GetPoint1</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>上文代码中涉及两个自定义的类：LineFractalTransform与ThreadIndicesLineFractal</p>
+<h5 id="ThreadIndicesLineFractal">ThreadIndicesLineFractal</h5>
+<p>线程类在创建时，<strong>依据自身线程号</strong>，读取输入数组的对应元素，并存储到私有成员变量中。</p>
+<blockquote>
+<p>初始的线程仅线程号一个属性。<br>
+但创建线程类以后，通过设置成员变量，使每个线程持有更多的自身属性</p>
+</blockquote>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//关键代码</span>
+<span class="token keyword">class</span> <span class="token class-name">ThreadIndicesLineFractal</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span><span class="token class-name">ThreadIndicesBasic</span></span>
+<span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    VTKM_EXEC <span class="token function">ThreadIndicesLineFractal</span><span class="token punctuation">(</span>vtkm<span class="token double-colon punctuation">::</span>Id threadIndex<span class="token punctuation">,</span> vtkm<span class="token double-colon punctuation">::</span>Id inputIndex<span class="token punctuation">,</span>
+        vtkm<span class="token double-colon punctuation">::</span>IdComponent visitIndex<span class="token punctuation">,</span> vtkm<span class="token double-colon punctuation">::</span>Id outputIndex<span class="token punctuation">,</span> <span class="token keyword">const</span> InputPointPortal<span class="token operator">&amp;</span> inputPoints<span class="token punctuation">)</span>
+        <span class="token operator">:</span> <span class="token function">Superclass</span><span class="token punctuation">(</span>threadIndex<span class="token punctuation">,</span> inputIndex<span class="token punctuation">,</span> visitIndex<span class="token punctuation">,</span> outputIndex<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+        <span class="token keyword">this</span><span class="token operator">-></span>Point0 <span class="token operator">=</span> inputPoints<span class="token punctuation">.</span><span class="token function">Get</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token operator">-></span><span class="token function">GetInputIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token operator">-></span>Point1 <span class="token operator">=</span> inputPoints<span class="token punctuation">.</span><span class="token function">Get</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token operator">-></span><span class="token function">GetInputIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    VTKM_EXEC
+        <span class="token keyword">const</span> CoordinateType<span class="token operator">&amp;</span> <span class="token function">GetPoint0</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token operator">-></span>Point0<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+    VTKM_EXEC
+        <span class="token keyword">const</span> CoordinateType<span class="token operator">&amp;</span> <span class="token function">GetPoint1</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token operator">-></span>Point1<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+<span class="token keyword">private</span><span class="token operator">:</span>
+    CoordinateType Point0<span class="token punctuation">;</span>
+    CoordinateType Point1<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<blockquote>
+<p>自定义的线程类实现功能：<br>
+通过接口GetPoint(),用户可直接访问线程存储的两坐标点</p>
+</blockquote>
+<h5 id="LineFractalTransform">LineFractalTransform</h5>
+<p>LineFractalTransform实现线段旋转功能：<br>
+局部一条直线迭代为四条折线时，有两条折线不再平行于原本直线，即与初始直线产生了一定夹角。我们通过两向量计算出偏移角</p>
+<p>自定义的AspectTagLineFractalTransform返回类型是LineFractalTransform类<br>
+它的return函数调用LineFractalTransform的构造函数：通过输入的两点，计算出Offset, UAxis与VAxis来控制直线旋转角度，并存放于私有成员变量中</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">LineFractalTransform</span>
+<span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+    VTKM_EXEC <span class="token function">LineFractalTransform</span><span class="token punctuation">(</span><span class="token keyword">const</span> vtkm<span class="token double-colon punctuation">::</span>Vec<span class="token operator">&lt;</span>T<span class="token punctuation">,</span> <span class="token number">2</span><span class="token operator">></span><span class="token operator">&amp;</span> point0<span class="token punctuation">,</span> <span class="token keyword">const</span> vtkm<span class="token double-colon punctuation">::</span>Vec<span class="token operator">&lt;</span>T<span class="token punctuation">,</span> <span class="token number">2</span><span class="token operator">></span><span class="token operator">&amp;</span> point1<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+        <span class="token keyword">this</span><span class="token operator">-></span>Offset <span class="token operator">=</span> point0<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token operator">-></span>UAxis <span class="token operator">=</span> point1 <span class="token operator">-</span> point0<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token operator">-></span>VAxis <span class="token operator">=</span> vtkm<span class="token double-colon punctuation">::</span><span class="token function">make_Vec</span><span class="token punctuation">(</span><span class="token operator">-</span><span class="token keyword">this</span><span class="token operator">-></span>UAxis<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token operator">-></span>UAxis<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+    VTKM_EXEC vtkm<span class="token double-colon punctuation">::</span>Vec<span class="token operator">&lt;</span>T<span class="token punctuation">,</span> <span class="token number">2</span><span class="token operator">></span> <span class="token keyword">operator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token keyword">const</span> vtkm<span class="token double-colon punctuation">::</span>Vec<span class="token operator">&lt;</span>T<span class="token punctuation">,</span> <span class="token number">2</span><span class="token operator">></span><span class="token operator">&amp;</span> ppoint<span class="token punctuation">)</span> <span class="token keyword">const</span>
+    <span class="token punctuation">&#123;</span>
+        vtkm<span class="token double-colon punctuation">::</span>Vec2f <span class="token function">ppointCast</span><span class="token punctuation">(</span>ppoint<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        vtkm<span class="token double-colon punctuation">::</span>Vec2f transform <span class="token operator">=</span> ppointCast<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">*</span> <span class="token keyword">this</span><span class="token operator">-></span>UAxis <span class="token operator">+</span> ppointCast<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">*</span> <span class="token keyword">this</span><span class="token operator">-></span>VAxis <span class="token operator">+</span> <span class="token keyword">this</span><span class="token operator">-></span>Offset<span class="token punctuation">;</span>
+        <span class="token keyword">return</span> vtkm<span class="token double-colon punctuation">::</span><span class="token generic-function"><span class="token function">Vec</span><span class="token generic class-name"><span class="token operator">&lt;</span>T<span class="token punctuation">,</span> <span class="token number">2</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>transform<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+    VTKM_EXEC vtkm<span class="token double-colon punctuation">::</span>Vec<span class="token operator">&lt;</span>T<span class="token punctuation">,</span> <span class="token number">2</span><span class="token operator">></span> <span class="token keyword">operator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">(</span>T x<span class="token punctuation">,</span> T y<span class="token punctuation">)</span> <span class="token keyword">const</span>
+    <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">(</span>vtkm<span class="token double-colon punctuation">::</span><span class="token generic-function"><span class="token function">Vec</span><span class="token generic class-name"><span class="token operator">&lt;</span>T<span class="token punctuation">,</span> <span class="token number">2</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>x<span class="token punctuation">,</span> y<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token keyword">private</span><span class="token operator">:</span>
+    vtkm<span class="token double-colon punctuation">::</span>Vec2f Offset<span class="token punctuation">;</span>
+    vtkm<span class="token double-colon punctuation">::</span>Vec2f UAxis<span class="token punctuation">;</span>
+    vtkm<span class="token double-colon punctuation">::</span>Vec2f VAxis<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<p>ExecutionSignature Tags后续作为worklet重载运算符的输入参数<br>
+即每条线段生成的LineFractalTransform会作为operator()一个参数</p>
+<h3 id="2-2-4-定义worklet的重载运算符">2.2.4 定义worklet的重载运算符</h3>
+<p>正如上文提及：worklet是一个functor，通过重载operator()类，可以像调用函数一样使用该类<br>
+因此，<strong>operator()的定义是实现任务的关键</strong>，本案例在operator()里生成四条新直线</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">using</span> ControlSignature<span class="token operator">=</span><span class="token keyword">void</span><span class="token punctuation">(</span>SegmentsIn<span class="token punctuation">,</span> SegmentsOut<span class="token operator">&lt;</span><span class="token number">4</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">using</span> ExecutionSignature<span class="token operator">=</span><span class="token keyword">void</span><span class="token punctuation">(</span>Transform<span class="token punctuation">,</span> _2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">SegmentsOutVecType</span><span class="token operator">></span>
+<span class="token keyword">void</span> <span class="token keyword">operator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token keyword">const</span> vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>LineFractalTransform<span class="token operator">&amp;</span> transform<span class="token punctuation">,</span> SegmentsOutVecType<span class="token operator">&amp;</span> segmentsOutVec<span class="token punctuation">)</span> <span class="token keyword">const</span>
+<span class="token punctuation">&#123;</span>
+    segmentsOutVec<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">=</span><span class="token function">transform</span><span class="token punctuation">(</span><span class="token number">0.00f</span><span class="token punctuation">,</span> <span class="token number">0.00f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    segmentsOutVec<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">=</span><span class="token function">transform</span><span class="token punctuation">(</span><span class="token number">0.33f</span><span class="token punctuation">,</span> <span class="token number">0.00f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    segmentsOutVec<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">=</span><span class="token function">transform</span><span class="token punctuation">(</span><span class="token number">0.33f</span><span class="token punctuation">,</span> <span class="token number">0.00f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    segmentsOutVec<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">=</span><span class="token function">transform</span><span class="token punctuation">(</span><span class="token number">0.50f</span><span class="token punctuation">,</span> <span class="token number">0.29f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    
+    segmentsOutVec<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">=</span><span class="token function">transform</span><span class="token punctuation">(</span><span class="token number">0.50f</span><span class="token punctuation">,</span> <span class="token number">0.29f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    segmentsOutVec<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">=</span><span class="token function">transform</span><span class="token punctuation">(</span><span class="token number">0.67f</span><span class="token punctuation">,</span> <span class="token number">0.00f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    
+    segmentsOutVec<span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">=</span><span class="token function">transform</span><span class="token punctuation">(</span><span class="token number">0.67f</span><span class="token punctuation">,</span> <span class="token number">0.00f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    segmentsOutVec<span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">=</span><span class="token function">transform</span><span class="token punctuation">(</span><span class="token number">1.00f</span><span class="token punctuation">,</span> <span class="token number">0.00f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>operator()将transform作为输入，输出到segmentsOutVec<br>
+由ExecutionSignature可知，segmentsOutVec对应ControlSignature的第二个参数SegmentsOut&lt;4&gt;，进一步对应到outpoints数组</p>
+<p>SegmentsOut&lt;4&gt;表示四条直线，每条直线的两端点通过transform类计算</p>
+<blockquote>
+<p>transform类也是一个functor，因此可以像调用函数一样使用transform类</p>
+</blockquote>
+<p>最后，将计算出的四条直线输出到outpoints数组中，完成一次迭代</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>公子平
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://wonderzyp.cn/2022/01/03/cpp/snow/" title="VTKm实现雪花分型案例">https://wonderzyp.cn/2022/01/03/cpp/snow/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"><i class="fa fa-tag"></i> C++</a>
+              <a href="/tags/VTKm/" rel="tag"><i class="fa fa-tag"></i> VTKm</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/01/03/cpp/structured-binding/" rel="prev" title="C++17——结构化绑定">
+                  <i class="fa fa-chevron-left"></i> C++17——结构化绑定
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2021 – 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">公子平</span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"wonderzyp/blogtalks","issue_term":"pathname","theme":"github-dark","cdn":"https://utteranc.es/client.js"}</script>
+<script src="/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>

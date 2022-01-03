@@ -24,23 +24,23 @@
 <meta name="description" content="本文内容：  介绍C++17的新特性：结构化绑定(Structured Binding) 介绍std::pair和std::tuple">
 <meta property="og:type" content="article">
 <meta property="og:title" content="C++17——结构化绑定">
-<meta property="og:url" content="https://wonderzyp.cn/2022/01/03/structured-binding/index.html">
+<meta property="og:url" content="https://wonderzyp.cn/2022/01/03/cpp/structured-binding/index.html">
 <meta property="og:site_name" content="公子平的博客">
 <meta property="og:description" content="本文内容：  介绍C++17的新特性：结构化绑定(Structured Binding) 介绍std::pair和std::tuple">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2022-01-03T06:28:04.000Z">
-<meta property="article:modified_time" content="2022-01-03T06:36:05.632Z">
+<meta property="article:modified_time" content="2022-01-03T06:44:08.599Z">
 <meta property="article:author" content="公子平">
 <meta property="article:tag" content="C++">
 <meta property="article:tag" content="Modern C++">
 <meta name="twitter:card" content="summary">
 
 
-<link rel="canonical" href="https://wonderzyp.cn/2022/01/03/structured-binding/">
+<link rel="canonical" href="https://wonderzyp.cn/2022/01/03/cpp/structured-binding/">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://wonderzyp.cn/2022/01/03/structured-binding/","path":"2022/01/03/structured-binding/","title":"C++17——结构化绑定"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://wonderzyp.cn/2022/01/03/cpp/structured-binding/","path":"2022/01/03/cpp/structured-binding/","title":"C++17——结构化绑定"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
 <title>C++17——结构化绑定 | 公子平的博客</title>
@@ -123,7 +123,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E6%9E%84%E5%8C%96%E7%BB%91%E5%AE%9A-Structured-Binding"><span class="nav-text">结构化绑定(Structured Binding)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#pair%E5%92%8Ctuple"><span class="nav-text">pair和tuple</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#pair"><span class="nav-text">pair</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#tuple"><span class="nav-text">tuple</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B2%A1%E5%95%A5%E7%94%A8%E7%9A%84%E5%B0%8F%E7%9F%A5%E8%AF%86%F0%9F%98%86"><span class="nav-text">没啥用的小知识😆</span></a></li></ol></li></ol></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E6%9E%84%E5%8C%96%E7%BB%91%E5%AE%9A-Structured-Binding"><span class="nav-text">结构化绑定(Structured Binding)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#pair%E5%92%8Ctuple"><span class="nav-text">pair和tuple</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#pair"><span class="nav-text">pair</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#tuple"><span class="nav-text">tuple</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B2%A1%E5%95%A5%E7%94%A8%E7%9A%84%E5%B0%8F%E7%9F%A5%E8%AF%86%F0%9F%98%86"><span class="nav-text">没啥用的小知识😆</span></a></li></ol></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -199,7 +199,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://wonderzyp.cn/2022/01/03/structured-binding/">
+    <link itemprop="mainEntityOfPage" href="https://wonderzyp.cn/2022/01/03/cpp/structured-binding/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -224,7 +224,7 @@
       <span class="post-meta-item-text">Posted on</span>
       
 
-      <time title="Created: 2022-01-03 14:28:04 / Modified: 14:36:05" itemprop="dateCreated datePublished" datetime="2022-01-03T14:28:04+08:00">2022-01-03</time>
+      <time title="Created: 2022-01-03 14:28:04 / Modified: 14:44:08" itemprop="dateCreated datePublished" datetime="2022-01-03T14:28:04+08:00">2022-01-03</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -311,14 +311,14 @@ cout<span class="token operator">&lt;&lt;</span>status<span class="token operato
 cout<span class="token operator">&lt;&lt;</span>status1<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>value1<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span></code></pre>
 <h2 id="pair和tuple">pair和tuple</h2>
 <p>pair和tuple均是将多种类型元素进行<strong>整合打包</strong>，其中pair仅能打包两个元素，但tuple无此限制</p>
-<h4 id="pair">pair</h4>
+<h3 id="pair">pair</h3>
 <p>将<strong>两个</strong>不同数据直接整合为一个数据单元，其原型定义和使用方式如下：</p>
 <pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">class</span> <span class="token class-name">T1</span><span class="token punctuation">,</span> <span class="token keyword">class</span> <span class="token class-name">T2</span><span class="token operator">></span> <span class="token keyword">struct</span> <span class="token class-name">pair</span><span class="token punctuation">;</span>
 
 <span class="token comment">//使用</span>
 std<span class="token double-colon punctuation">::</span>pair<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token punctuation">,</span> string<span class="token operator">></span> data <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">make_pair</span><span class="token punctuation">(</span><span class="token number">855</span><span class="token punctuation">,</span><span class="token string">"zyp"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 std<span class="token double-colon punctuation">::</span>cout<span class="token operator">&lt;&lt;</span>data<span class="token punctuation">.</span>first<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>data<span class="token punctuation">.</span>second<span class="token operator">&lt;&lt;</span>std<span class="token double-colon punctuation">::</span>endl<span class="token punctuation">;</span></code></pre>
-<h4 id="tuple">tuple</h4>
+<h3 id="tuple">tuple</h3>
 <p>可将tuple视为pair的<strong>泛化</strong>版本，pair仅支持绑定两个元素，tuple摆脱此限制<br>
 tuple可使用std::tie()解包，同时兼容.first和.second<br>
 std::ignore其占位符作用，表明不提取对应位元素</p>
@@ -338,7 +338,7 @@ std<span class="token double-colon punctuation">::</span>cout<span class="token 
 cout<span class="token operator">&lt;&lt;</span><span class="token string">"using structured binding"</span><span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
 <span class="token keyword">const</span> <span class="token keyword">auto</span><span class="token operator">&amp;</span> <span class="token punctuation">[</span>value1<span class="token punctuation">,</span>name<span class="token punctuation">,</span>value2<span class="token punctuation">,</span>info<span class="token punctuation">]</span> <span class="token operator">=</span> data1<span class="token punctuation">;</span>
 std<span class="token double-colon punctuation">::</span>cout<span class="token operator">&lt;&lt;</span>value1<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>name<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>value2<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>info<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span></code></pre>
-<h4 id="没啥用的小知识😆">没啥用的小知识😆</h4>
+<h3 id="没啥用的小知识😆">没啥用的小知识😆</h3>
 <ul>
 <li>语法糖(syntactic sugar)：更简洁明了地实现某功能，但缺了它不会导致该功能无法实现(锦上添花)</li>
 <li>语法盐(syntactic salt)：一种降低程序员编写出不良代码的概率，但会使代码编写更为繁琐</li>
@@ -360,7 +360,7 @@ std<span class="token double-colon punctuation">::</span>cout<span class="token 
   </li>
   <li class="post-copyright-link">
       <strong>Post link: </strong>
-      <a href="https://wonderzyp.cn/2022/01/03/structured-binding/" title="C++17——结构化绑定">https://wonderzyp.cn/2022/01/03/structured-binding/</a>
+      <a href="https://wonderzyp.cn/2022/01/03/cpp/structured-binding/" title="C++17——结构化绑定">https://wonderzyp.cn/2022/01/03/cpp/structured-binding/</a>
   </li>
   <li class="post-copyright-license">
     <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.

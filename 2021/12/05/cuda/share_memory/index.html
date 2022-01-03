@@ -20,7 +20,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
 
-<script class="next-config" data-name="main" type="application/json">{"hostname":"wonderzyp.cn","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.8.2","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":true,"nav":{"utterances":{"text":"Load utterances"}},"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<script class="next-config" data-name="main" type="application/json">{"hostname":"wonderzyp.cn","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.8.2","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":true,"nav":{"utterances":{"text":"Load utterances"}},"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
 <meta name="description" content="存储体冲突会导致性能下降，填充可有效避免冲突，并提升性能">
 <meta property="og:type" content="article">
 <meta property="og:title" content="CUDA-共享内存总结">
@@ -85,6 +85,7 @@
 
   <div class="site-nav-right">
     <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
     </div>
   </div>
 </div>
@@ -98,11 +99,37 @@
         <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
         <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
         <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
   </ul>
 </nav>
 
 
 
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
 
 </div>
         
@@ -159,6 +186,11 @@
       </div>
   </nav>
 </div>
+  <div class="sidebar-button site-overview-item animated">
+    <button class="js-gitter-toggle-chat-button"><i class="fa fa-comment"></i>
+      Chat
+    </button>
+  </div>
   <div class="links-of-author site-overview-item animated">
       <span class="links-of-author-item">
         <a href="https://github.com/wonderzyp" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wonderzyp" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
@@ -267,14 +299,14 @@
 <h1>2 存储体冲突与填充</h1>
 <h2 id="2-1-存储体冲突">2.1 存储体冲突</h2>
 <p>共享内存被划分为32个存储体（对应一个线程束内存在32个线程），它们可以被同时访问。当多个地址请求落在同一个存储体中，会发生存储体冲突。<br>
-<img src="/pic/cuda1.png" alt="1"><br>
+<img data-src="/pic/cuda1.png" alt="1"><br>
 如上图所示，Bank0~31表示32个存储体，若同一时刻有两个线程分别访问Bank0下的地址（序号0、32、64、96），就会发生存储体冲突，导致性能降低。<br>
 理想状态下，同一时刻应访问序号0至31。由于0至31属于不同的存储体，因此不会产生存储体冲突，且能够充分利用带宽。</p>
 <h2 id="2-2-填充以避免冲突">2.2 填充以避免冲突</h2>
 <p>当需要按列读取元素时，由于每一列隶属于同一个存储体，因此会产生存储体冲突。借助填充手段，可以将原先属于同一存储体的列元素，打乱到不同存储体中，从而避免存储体冲突。<br>
-<img src="/pic/cuda2.png" alt="2"><br>
+<img data-src="/pic/cuda2.png" alt="2"><br>
 为节省篇幅，以5个存储体为例（实际上为32个）。 当按列读取第一列时，所有元素均在存储体Bank0中，发生存储体冲突。 假想在末列填充一列占位内存，等价于每隔5个元素填充一次，则填充后的存储体结构如下图所示：<br>
-<img src="/pic/cuda3.png" alt="3"></p>
+<img data-src="/pic/cuda3.png" alt="3"></p>
 <blockquote>
 <p>注意：</p>
 <ol>
@@ -295,7 +327,7 @@ tile<span class="token punctuation">[</span>threadIdx<span class="token punctuat
 <span class="token comment">//按列读取tile中的元素，且不会产生存储体冲突</span>
 out<span class="token punctuation">[</span>idx<span class="token punctuation">]</span><span class="token operator">=</span>tile<span class="token punctuation">[</span>threadIdx<span class="token punctuation">.</span>x<span class="token punctuation">]</span><span class="token punctuation">[</span>threadIdx<span class="token punctuation">.</span>y<span class="token punctuation">]</span><span class="token punctuation">;</span></code></pre>
 <p>针对原始大小已知的共享内存，借助下图解释代码：<br>
-<img src="/pic/cuda4.png" alt="4"><br>
+<img data-src="/pic/cuda4.png" alt="4"><br>
 图一为想象图，可帮助我们逻辑上更好地理解，实际上图一所示的情形并不存在，GPU中实际的存储情况为图二所示。<br>
 我们可以假定图一和图二是等价的。想象中的图一，在GPU中自动对应为图二。</p>
 <pre class="language-c" data-language="c"><code class="language-c">tile<span class="token punctuation">[</span>threadIdx<span class="token punctuation">.</span>y<span class="token punctuation">]</span><span class="token punctuation">[</span>threadIdx<span class="token punctuation">.</span>x<span class="token punctuation">]</span><span class="token operator">=</span>idx<span class="token punctuation">;</span></code></pre>
@@ -422,9 +454,15 @@ out<span class="token punctuation">[</span>idx<span class="token punctuation">]<
 
   
   <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lozad@1.16.0/dist/lozad.min.js" integrity="sha256-mOFREFhqmHeQbXpK2lp4nA3qooVgACfh88fpJftLBbc=" crossorigin="anonymous"></script>
 <script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
 
   
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+<script class="next-config" data-name="gitter" type="application/json">{"enable":true,"room":"talking_and_studing/community"}</script>
+<script src="/js/third-party/chat/gitter.js"></script>
+<script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
 
 
 

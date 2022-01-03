@@ -1,0 +1,1610 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>博客持续建设中...</title>
+    <url>/2022/01/02/notice/</url>
+    <content><![CDATA[<p>博客依旧在改进中，俗称“内测版”<br>
+欢迎同好们沟通交流！</p>
+<span id="more"></span>
+<p>Welcome!</p>
+]]></content>
+  </entry>
+  <entry>
+    <title>VTKm实现雪花分型案例</title>
+    <url>/2022/01/03/cpp/snow/</url>
+    <content><![CDATA[<p>程序并行化需针对不同的硬件平台编写特定的代码，极大增加了编程工作量。<br>
+针对并行计算移植性差的这一痛点，VTK-m框架提供解决方案，实现了<strong>一份代码多平台通用。</strong><br>
+本文基于VTKm框架实现雪花分型案例：<br>
+<img data-src="/pic/snowexam.png" alt="分型案例"></p>
+<span id="more"></span>
+<p><strong>源码：</strong></p>
+<ul>
+<li><a href="https://github.com/wonderzyp/KochSnowflake">github</a></li>
+<li><a href="https://gitee.com/wonderzyp/KochSnowflake">gitee</a></li>
+</ul>
+<h1>0 VTKm框架简介</h1>
+<p>VTKm是Kitware公司(就是整出CMake的公司:smile:)旗下产品，<a href="https://m.vtk.org/">VTKm官网</a>称其为: A toolkit of SCIENTIFIC VISUALIZATION ALGORITHMS for emerging processor architectures。<br>
+虽然官方定位是可视化软件，但我们可将其用作程序中的一个模块，实现特定部分的<strong>并行化</strong>，并可保证程序在<strong>多平台通用</strong>。<a href="https://gitlab.kitware.com/vtk/vtk-m-user-guide/-/wikis/home">官方用户手册</a>中也曾提到过这一点。</p>
+<h1>1 雪花分型概述</h1>
+<p><img data-src="/pic/snowiter1.png" alt="iter1"></p>
+<center>图(1) 分型迭代1次</center>
+<p><img data-src="/pic/snowiter2.png" alt="iter2"></p>
+<center>图(2) 分型迭代2次</center>
+如上图所示，图(2)是在图(1)基础上迭代得到
+以图(1)圈出的局部直线为例，迭代一次后变为图(2)中的局部四条直线
+因此每一步迭代：**输入为一条直线，输出为4条直线**
+<h1>2 VTKm框架实现</h1>
+<h2 id="2-1-Run">2.1 Run()</h2>
+<p>Run()函数接受参数numIterations，控制进行的迭代次数</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">VTKM_CONT <span class="token keyword">static</span> vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>ArrayHandle<span class="token operator">&lt;</span>vtkm<span class="token double-colon punctuation">::</span>Vec2f<span class="token operator">></span> <span class="token function">Run</span><span class="token punctuation">(</span>
+    vtkm<span class="token double-colon punctuation">::</span>IdComponent numIterations<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+        vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>ArrayHandle<span class="token operator">&lt;</span>vtkm<span class="token double-colon punctuation">::</span>Vec2f<span class="token operator">></span> points<span class="token punctuation">;</span>
+
+        points<span class="token punctuation">.</span><span class="token function">Allocate</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        points<span class="token punctuation">.</span><span class="token function">WritePortal</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Set</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span>vtkm<span class="token double-colon punctuation">::</span><span class="token function">Vec2f</span><span class="token punctuation">(</span><span class="token number">0.0f</span><span class="token punctuation">,</span> <span class="token number">0.0f</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        points<span class="token punctuation">.</span><span class="token function">WritePortal</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Set</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> vtkm<span class="token double-colon punctuation">::</span><span class="token function">Vec2f</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">,</span> <span class="token number">0.0f</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>Invoker invoke<span class="token punctuation">;</span>
+        KochSnowflake<span class="token double-colon punctuation">::</span>FractalWorklet worklet<span class="token punctuation">;</span>
+
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>vtkm<span class="token double-colon punctuation">::</span>IdComponent i<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span> i<span class="token operator">&lt;</span>numIterations<span class="token punctuation">;</span> <span class="token operator">++</span>i<span class="token punctuation">)</span>
+        <span class="token punctuation">&#123;</span>
+            vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>ArrayHandle<span class="token operator">&lt;</span>vtkm<span class="token double-colon punctuation">::</span>Vec2f<span class="token operator">></span> outPoints<span class="token punctuation">;</span>
+            <span class="token function">invoke</span><span class="token punctuation">(</span>worklet<span class="token punctuation">,</span> points<span class="token punctuation">,</span> outPoints<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            points<span class="token operator">=</span>outPoints<span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">return</span> points<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span></code></pre>
+<p>上述代码使用数组points存储数据点，且初始化为{(0,0),(0,1)}<br>
+在for循环内部，以points数组为输入，输出至outpoints数组，并使用outpoints更新points数组</p>
+<p>此处invoke函数的第一个参数worklet，控制分型的具体实现细节</p>
+<blockquote>
+<p>invoke()函数可以理解为唤醒worklet，将points作为参数传递给worklet，并得到worklet的输出outpoints</p>
+</blockquote>
+<h2 id="2-2-worklet">2.2 worklet</h2>
+<p>VTKm框架内置部分worklet，本案例为了进一步阐述worklet原理，实现自定义worklet</p>
+<h3 id="2-2-1-worklet是一个functor">2.2.1 worklet是一个functor</h3>
+<p>在C++中，如果定义类的时重载括号运算符，则可以向调用函数一样使用这个类</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">absInt</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token comment">//省去构造析构等</span>
+    <span class="token keyword">int</span> <span class="token keyword">operator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token keyword">int</span> val<span class="token punctuation">)</span><span class="token punctuation">&#123;</span><span class="token keyword">return</span> val<span class="token operator">&lt;</span><span class="token number">0</span><span class="token operator">?</span> <span class="token operator">-</span>val <span class="token operator">:</span> val<span class="token punctuation">;</span><span class="token punctuation">&#125;</span> 
+<span class="token punctuation">&#125;</span>
+absInt a<span class="token punctuation">;</span>
+<span class="token keyword">int</span> i<span class="token operator">=</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+<span class="token keyword">int</span> ui<span class="token operator">=</span><span class="token function">a</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//a是一个absInt类，但可以像函数一样调用</span></code></pre>
+<h3 id="2-2-2-worklet基本构成">2.2.2 worklet基本构成</h3>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">struct</span> <span class="token class-name">FractalWorklet</span> <span class="token operator">:</span> <span class="token base-clause">vtkm<span class="token double-colon punctuation">::</span>worklet<span class="token double-colon punctuation">::</span><span class="token class-name">myWorklet</span></span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">using</span> ControlSignature<span class="token operator">=</span><span class="token keyword">void</span><span class="token punctuation">(</span>SegmentsIn<span class="token punctuation">,</span> SegmentsOut<span class="token operator">&lt;</span><span class="token number">4</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> ExecutionSignature<span class="token operator">=</span><span class="token keyword">void</span><span class="token punctuation">(</span>Transform<span class="token punctuation">,</span> _2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> InputDomain<span class="token operator">=</span>_1<span class="token punctuation">;</span>
+
+    <span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">SegmentsOutVecType</span><span class="token operator">></span>
+    <span class="token keyword">void</span> <span class="token keyword">operator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token keyword">const</span> vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>LineFractalTransform<span class="token operator">&amp;</span> transform<span class="token punctuation">,</span> SegmentsOutVecType<span class="token operator">&amp;</span> segmentsOutVec<span class="token punctuation">)</span> <span class="token keyword">const</span>
+    <span class="token punctuation">&#123;</span>
+        <span class="token comment">//...</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<p>我们着重关注三个环节：<br>
+ControlSignature, ExecutionSignature和重载的operator()</p>
+<h4 id="1-ControlSignature">(1) ControlSignature</h4>
+<p>ControlSignature的参数与前面的invoke函数参数一一对应</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">using</span> ControlSignature<span class="token operator">=</span><span class="token keyword">void</span><span class="token punctuation">(</span>SegmentsIn<span class="token punctuation">,</span> SegmentsOut<span class="token operator">&lt;</span><span class="token number">4</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">invoke</span><span class="token punctuation">(</span>worklet<span class="token punctuation">,</span> points<span class="token punctuation">,</span> outPoints<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>points对应SegmentsIn, outPoints对应SegmentsOut&lt;4&gt;</p>
+<h4 id="2-ExecutionSignature">(2) ExecutionSignature</h4>
+<p>ExecutionSignature与ControlSignature参数<strong>相关联</strong>，并与operator()参数<strong>一一对应</strong></p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">using</span> ControlSignature<span class="token operator">=</span><span class="token keyword">void</span><span class="token punctuation">(</span>SegmentsIn<span class="token punctuation">,</span> SegmentsOut<span class="token operator">&lt;</span><span class="token number">4</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">using</span> ExecutionSignature<span class="token operator">=</span><span class="token keyword">void</span><span class="token punctuation">(</span>Transform<span class="token punctuation">,</span> _2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">void</span> <span class="token keyword">operator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token keyword">const</span> vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>LineFractalTransform<span class="token operator">&amp;</span> transform<span class="token punctuation">,</span> SegmentsOutVecType<span class="token operator">&amp;</span> segmentsOutVec<span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">&#123;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">&#125;</span></code></pre>
+<p>其中，_2表示对应ControlSignature的第二个参数SegmentsOut&lt;4&gt;<br>
+且(Transform, _2)与operator()参数类型严格匹配</p>
+<h4 id="3-operator">(3) operator()</h4>
+<p>operator()是具体实现的环节，文章在后面会详细解释</p>
+<p>至此，我们粗略了解VTKm使用逻辑，但依旧不清楚SegmentsIn, SegmentsOut&lt;4&gt;和Transform等意义。<br>
+本文将在接下来的自定义worklet环节具体介绍。</p>
+<h3 id="2-2-3-自定义worklet">2.2.3 自定义worklet</h3>
+<p>本章主要介绍worklet的关键环节：<br>
+自定义ControlSignature Tags：SegmentsIn, SegmentsOut&lt;4&gt;<br>
+自定义ExecutionSignature Tags：Transform</p>
+<h4 id="1-ControlSignature-Tags">(1) ControlSignature Tags</h4>
+<p>本案例自定义SegmentsIn和SegmentsOut两个ControlSignature Tags</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//自定义ControlSignature Tags</span>
+<span class="token keyword">struct</span> <span class="token class-name">SegmentsIn</span> <span class="token operator">:</span> <span class="token base-clause">vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span><span class="token class-name">ControlSignatureTagBase</span></span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">using</span> TypeCheckTag <span class="token operator">=</span> vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>TypeCheckTag2DCoordinates<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> TransportTag <span class="token operator">=</span> vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>TransportTag2DLineSegmentsIn<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> FetchTag <span class="token operator">=</span> vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>FetchTag2DLineSegmentsIn<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">template</span><span class="token operator">&lt;</span>vtkm<span class="token double-colon punctuation">::</span>IdComponent NumSegments<span class="token operator">></span>
+<span class="token keyword">struct</span> <span class="token class-name">SegmentsOut</span> <span class="token operator">:</span> <span class="token base-clause">vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span><span class="token class-name">ControlSignatureTagBase</span></span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">using</span> TypeCheckTag <span class="token operator">=</span> vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>TypeCheckTag2DCoordinates<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> TransportTag <span class="token operator">=</span> vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>TransportTag2DLineSegmentsOut<span class="token operator">&lt;</span>NumSegments<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> FetchTag <span class="token operator">=</span> vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>FetchTagArrayDirectOut<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<p>从上述代码可知，ControlSignature Tags包含三个步骤：</p>
+<ol>
+<li>类型检查：TypeCheck</li>
+<li>传输：TransportTag</li>
+<li>分发：Fetch</li>
+</ol>
+<h5 id="TypeCheck">TypeCheck</h5>
+<p>检查类型，<strong>只接受</strong>内部参数为vtkm::Vec2f_32和vtkm::Vec2f_64的arrayHandle。即数组内部元素必须为二维点，如points={(0,0),(1,0)}</p>
+<h5 id="Transport">Transport</h5>
+<p>VTKm将数据划分为两个环境：<strong>控制环境</strong>和<strong>执行环境</strong><br>
+由于每个环境有自己的API，且彼此间<strong>不允许直接交互</strong><br>
+我们定义的points和outpoint数组均为控制环境中的对象，而实际计算时需在执行环境中进行</p>
+<blockquote>
+<p>Transport实现对象在两环境之间的转化</p>
+</blockquote>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//2. Transport</span>
+<span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">ContObjectType</span><span class="token punctuation">,</span> <span class="token keyword">typename</span> <span class="token class-name">Device</span><span class="token operator">></span>
+<span class="token keyword">struct</span> <span class="token class-name">Transport</span><span class="token operator">&lt;</span>vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>TransportTag2DLineSegmentsIn<span class="token punctuation">,</span>
+				ContObjectType<span class="token punctuation">,</span>
+				Device<span class="token operator">></span>
+<span class="token punctuation">&#123;</span>
+	<span class="token keyword">using</span> GroupedArrayType <span class="token operator">=</span> vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>ArrayHandleGroupVec<span class="token operator">&lt;</span>ContObjectType<span class="token punctuation">,</span> <span class="token number">2</span><span class="token operator">></span><span class="token punctuation">;</span>
+	<span class="token keyword">using</span> ExecObjectType <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">GroupedArrayType</span><span class="token double-colon punctuation">::</span>ReadPortalType<span class="token punctuation">;</span>
+
+	<span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">InputDomainType</span><span class="token operator">></span>
+	VTKM_CONT ExecObjectType <span class="token keyword">operator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token keyword">const</span> ContObjectType<span class="token operator">&amp;</span> object<span class="token punctuation">,</span>
+		<span class="token keyword">const</span> InputDomainType<span class="token operator">&amp;</span><span class="token punctuation">,</span>
+		vtkm<span class="token double-colon punctuation">::</span>Id inputRange<span class="token punctuation">,</span>
+		vtkm<span class="token double-colon punctuation">::</span>Id<span class="token punctuation">,</span>
+		vtkm<span class="token double-colon punctuation">::</span>cont<span class="token double-colon punctuation">::</span>Token<span class="token operator">&amp;</span> token<span class="token punctuation">)</span> <span class="token keyword">const</span>
+	<span class="token punctuation">&#123;</span>
+		<span class="token comment">//GroupedArrayType将array中每两个点进行配对，以表示直线</span>
+		GroupedArrayType <span class="token function">groupedArray</span><span class="token punctuation">(</span>object<span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token keyword">return</span> groupedArray<span class="token punctuation">.</span><span class="token function">PrepareForInput</span><span class="token punctuation">(</span>Device<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span> token<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<p>operator()的输入类型是控制环境对象ContObjectType，输出类型是执行环境对象ExecObjectType，实现对象转化。</p>
+<p>同时，operator()将ContObject内部元素两两打包<br>
+ContObject内部元素是二维点，两点构成一条直线，因此ExecObject内部元素是线</p>
+<blockquote>
+<p>例如：ContObject={(0,0),(0.5,0),(0.5,0),(1,0)}，表示四个点<br>
+则ExecObject={((0,0),(0.5,0), (0.5,0),(1,0))}，表示两条线</p>
+</blockquote>
+<h5 id="Fetch">Fetch</h5>
+<p>Fetch将数组元素分配至不同线程中，实现<strong>不同线程处理不同数组元素</strong></p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">ExecObjectType</span><span class="token operator">></span>
+<span class="token keyword">struct</span> <span class="token class-name">Fetch</span><span class="token operator">&lt;</span>vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>FetchTag2DLineSegmentsIn<span class="token punctuation">,</span> vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>AspectTagDefault<span class="token punctuation">,</span> ExecObjectType<span class="token operator">></span>
+<span class="token punctuation">&#123;</span>
+	<span class="token keyword">using</span> ValueType <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">ExecObjectType</span><span class="token double-colon punctuation">::</span>ValueType<span class="token punctuation">;</span>
+	VTKM_SUPPRESS_EXEC_WARNINGS
+	<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">ThreadIndicesType</span><span class="token operator">></span>
+	VTKM_EXEC ValueType <span class="token function">Load</span><span class="token punctuation">(</span><span class="token keyword">const</span> ThreadIndicesType<span class="token operator">&amp;</span> indices<span class="token punctuation">,</span>
+		<span class="token keyword">const</span> ExecObjectType<span class="token operator">&amp;</span> arrayPortal<span class="token punctuation">)</span> <span class="token keyword">const</span>
+	<span class="token punctuation">&#123;</span>
+		<span class="token keyword">return</span> arrayPortal<span class="token punctuation">.</span><span class="token function">Get</span><span class="token punctuation">(</span>indices<span class="token punctuation">.</span><span class="token function">GetInputIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<p>重点关注return函数，各个线程通过各自的线程号，实现访问特定数组元素。</p>
+<blockquote>
+<p>一个线程管一条局部直线</p>
+</blockquote>
+<h4 id="2-ExecutionSignature-Tags">(2) ExecutionSignature Tags</h4>
+<p>本案例仅自定义一个ExecutionSignature Tag: Transform<br>
+涉及关键环节：</p>
+<ol>
+<li>自定义线程类</li>
+<li>自定义AspectTag</li>
+<li>自定义LineFractalTransform类</li>
+</ol>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//自定义ExecutionSignature Tags</span>
+<span class="token keyword">struct</span> <span class="token class-name">Transform</span> <span class="token operator">:</span> <span class="token base-clause">vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span><span class="token class-name">ExecutionSignatureTagBase</span></span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">static</span> <span class="token keyword">const</span> vtkm<span class="token double-colon punctuation">::</span>IdComponent INDEX <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> AspectTag <span class="token operator">=</span> vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>AspectTagLineFractalTransform<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<p>自定义的Transform需继承自ExecutionSignatureTagBase，并使用自定义的AspectTagLineFractalTransform</p>
+<h5 id="AspectTagLineFractalTransform">AspectTagLineFractalTransform</h5>
+<blockquote>
+<p>定义AspectTag旨在对传入的数据进行<strong>加工修饰</strong></p>
+</blockquote>
+<p>通过线程索引得到两个点GetPoint0和GetPoint1，返回类型是自定义的LineFractalTransform<br>
+可以理解为自定义的AspectTag对输入数据进行了加工，通过两点创建了一个类</p>
+<blockquote>
+<p>注意此处执行环境是VTKM_EXEC</p>
+</blockquote>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//核心代码</span>
+<span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">FetchTag</span><span class="token punctuation">,</span> <span class="token keyword">typename</span> <span class="token class-name">ExecObjectType</span><span class="token operator">></span>
+<span class="token keyword">struct</span> <span class="token class-name">Fetch</span><span class="token operator">&lt;</span>FetchTag<span class="token punctuation">,</span> vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>AspectTagLineFractalTransform<span class="token punctuation">,</span> ExecObjectType<span class="token operator">></span>
+<span class="token punctuation">&#123;</span>
+	<span class="token keyword">using</span> ValueType <span class="token operator">=</span> LineFractalTransform<span class="token punctuation">;</span>
+
+	VTKM_SUPPRESS_EXEC_WARNINGS
+	VTKM_EXEC ValueType <span class="token function">Load</span><span class="token punctuation">(</span><span class="token keyword">const</span> vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span>ThreadIndicesLineFractal<span class="token operator">&amp;</span> indices<span class="token punctuation">,</span>
+		<span class="token keyword">const</span> ExecObjectType<span class="token operator">&amp;</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+	<span class="token punctuation">&#123;</span>
+		<span class="token keyword">return</span> <span class="token function">ValueType</span><span class="token punctuation">(</span>indices<span class="token punctuation">.</span><span class="token function">GetPoint0</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> indices<span class="token punctuation">.</span><span class="token function">GetPoint1</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>上文代码中涉及两个自定义的类：LineFractalTransform与ThreadIndicesLineFractal</p>
+<h5 id="ThreadIndicesLineFractal">ThreadIndicesLineFractal</h5>
+<p>线程类在创建时，<strong>依据自身线程号</strong>，读取输入数组的对应元素，并存储到私有成员变量中。</p>
+<blockquote>
+<p>初始的线程仅线程号一个属性。<br>
+但创建线程类以后，通过设置成员变量，使每个线程持有更多的自身属性</p>
+</blockquote>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//关键代码</span>
+<span class="token keyword">class</span> <span class="token class-name">ThreadIndicesLineFractal</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>arg<span class="token double-colon punctuation">::</span><span class="token class-name">ThreadIndicesBasic</span></span>
+<span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    VTKM_EXEC <span class="token function">ThreadIndicesLineFractal</span><span class="token punctuation">(</span>vtkm<span class="token double-colon punctuation">::</span>Id threadIndex<span class="token punctuation">,</span> vtkm<span class="token double-colon punctuation">::</span>Id inputIndex<span class="token punctuation">,</span>
+        vtkm<span class="token double-colon punctuation">::</span>IdComponent visitIndex<span class="token punctuation">,</span> vtkm<span class="token double-colon punctuation">::</span>Id outputIndex<span class="token punctuation">,</span> <span class="token keyword">const</span> InputPointPortal<span class="token operator">&amp;</span> inputPoints<span class="token punctuation">)</span>
+        <span class="token operator">:</span> <span class="token function">Superclass</span><span class="token punctuation">(</span>threadIndex<span class="token punctuation">,</span> inputIndex<span class="token punctuation">,</span> visitIndex<span class="token punctuation">,</span> outputIndex<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+        <span class="token keyword">this</span><span class="token operator">-></span>Point0 <span class="token operator">=</span> inputPoints<span class="token punctuation">.</span><span class="token function">Get</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token operator">-></span><span class="token function">GetInputIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token operator">-></span>Point1 <span class="token operator">=</span> inputPoints<span class="token punctuation">.</span><span class="token function">Get</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token operator">-></span><span class="token function">GetInputIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    VTKM_EXEC
+        <span class="token keyword">const</span> CoordinateType<span class="token operator">&amp;</span> <span class="token function">GetPoint0</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token operator">-></span>Point0<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+    VTKM_EXEC
+        <span class="token keyword">const</span> CoordinateType<span class="token operator">&amp;</span> <span class="token function">GetPoint1</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token operator">-></span>Point1<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+<span class="token keyword">private</span><span class="token operator">:</span>
+    CoordinateType Point0<span class="token punctuation">;</span>
+    CoordinateType Point1<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<blockquote>
+<p>自定义的线程类实现功能：<br>
+通过接口GetPoint(),用户可直接访问线程存储的两坐标点</p>
+</blockquote>
+<h5 id="LineFractalTransform">LineFractalTransform</h5>
+<p>LineFractalTransform实现线段旋转功能：<br>
+局部一条直线迭代为四条折线时，有两条折线不再平行于原本直线，即与初始直线产生了一定夹角。我们通过两向量计算出偏移角</p>
+<p>自定义的AspectTagLineFractalTransform返回类型是LineFractalTransform类<br>
+它的return函数调用LineFractalTransform的构造函数：通过输入的两点，计算出Offset, UAxis与VAxis来控制直线旋转角度，并存放于私有成员变量中</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">LineFractalTransform</span>
+<span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+    VTKM_EXEC <span class="token function">LineFractalTransform</span><span class="token punctuation">(</span><span class="token keyword">const</span> vtkm<span class="token double-colon punctuation">::</span>Vec<span class="token operator">&lt;</span>T<span class="token punctuation">,</span> <span class="token number">2</span><span class="token operator">></span><span class="token operator">&amp;</span> point0<span class="token punctuation">,</span> <span class="token keyword">const</span> vtkm<span class="token double-colon punctuation">::</span>Vec<span class="token operator">&lt;</span>T<span class="token punctuation">,</span> <span class="token number">2</span><span class="token operator">></span><span class="token operator">&amp;</span> point1<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+        <span class="token keyword">this</span><span class="token operator">-></span>Offset <span class="token operator">=</span> point0<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token operator">-></span>UAxis <span class="token operator">=</span> point1 <span class="token operator">-</span> point0<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token operator">-></span>VAxis <span class="token operator">=</span> vtkm<span class="token double-colon punctuation">::</span><span class="token function">make_Vec</span><span class="token punctuation">(</span><span class="token operator">-</span><span class="token keyword">this</span><span class="token operator">-></span>UAxis<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token operator">-></span>UAxis<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+    VTKM_EXEC vtkm<span class="token double-colon punctuation">::</span>Vec<span class="token operator">&lt;</span>T<span class="token punctuation">,</span> <span class="token number">2</span><span class="token operator">></span> <span class="token keyword">operator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token keyword">const</span> vtkm<span class="token double-colon punctuation">::</span>Vec<span class="token operator">&lt;</span>T<span class="token punctuation">,</span> <span class="token number">2</span><span class="token operator">></span><span class="token operator">&amp;</span> ppoint<span class="token punctuation">)</span> <span class="token keyword">const</span>
+    <span class="token punctuation">&#123;</span>
+        vtkm<span class="token double-colon punctuation">::</span>Vec2f <span class="token function">ppointCast</span><span class="token punctuation">(</span>ppoint<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        vtkm<span class="token double-colon punctuation">::</span>Vec2f transform <span class="token operator">=</span> ppointCast<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">*</span> <span class="token keyword">this</span><span class="token operator">-></span>UAxis <span class="token operator">+</span> ppointCast<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">*</span> <span class="token keyword">this</span><span class="token operator">-></span>VAxis <span class="token operator">+</span> <span class="token keyword">this</span><span class="token operator">-></span>Offset<span class="token punctuation">;</span>
+        <span class="token keyword">return</span> vtkm<span class="token double-colon punctuation">::</span><span class="token generic-function"><span class="token function">Vec</span><span class="token generic class-name"><span class="token operator">&lt;</span>T<span class="token punctuation">,</span> <span class="token number">2</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>transform<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+    VTKM_EXEC vtkm<span class="token double-colon punctuation">::</span>Vec<span class="token operator">&lt;</span>T<span class="token punctuation">,</span> <span class="token number">2</span><span class="token operator">></span> <span class="token keyword">operator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">(</span>T x<span class="token punctuation">,</span> T y<span class="token punctuation">)</span> <span class="token keyword">const</span>
+    <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">(</span>vtkm<span class="token double-colon punctuation">::</span><span class="token generic-function"><span class="token function">Vec</span><span class="token generic class-name"><span class="token operator">&lt;</span>T<span class="token punctuation">,</span> <span class="token number">2</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>x<span class="token punctuation">,</span> y<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token keyword">private</span><span class="token operator">:</span>
+    vtkm<span class="token double-colon punctuation">::</span>Vec2f Offset<span class="token punctuation">;</span>
+    vtkm<span class="token double-colon punctuation">::</span>Vec2f UAxis<span class="token punctuation">;</span>
+    vtkm<span class="token double-colon punctuation">::</span>Vec2f VAxis<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<p>ExecutionSignature Tags后续作为worklet重载运算符的输入参数<br>
+即每条线段生成的LineFractalTransform会作为operator()一个参数</p>
+<h3 id="2-2-4-定义worklet的重载运算符">2.2.4 定义worklet的重载运算符</h3>
+<p>正如上文提及：worklet是一个functor，通过重载operator()类，可以像调用函数一样使用该类<br>
+因此，<strong>operator()的定义是实现任务的关键</strong>，本案例在operator()里生成四条新直线</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">using</span> ControlSignature<span class="token operator">=</span><span class="token keyword">void</span><span class="token punctuation">(</span>SegmentsIn<span class="token punctuation">,</span> SegmentsOut<span class="token operator">&lt;</span><span class="token number">4</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">using</span> ExecutionSignature<span class="token operator">=</span><span class="token keyword">void</span><span class="token punctuation">(</span>Transform<span class="token punctuation">,</span> _2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">SegmentsOutVecType</span><span class="token operator">></span>
+<span class="token keyword">void</span> <span class="token keyword">operator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token keyword">const</span> vtkm<span class="token double-colon punctuation">::</span>exec<span class="token double-colon punctuation">::</span>LineFractalTransform<span class="token operator">&amp;</span> transform<span class="token punctuation">,</span> SegmentsOutVecType<span class="token operator">&amp;</span> segmentsOutVec<span class="token punctuation">)</span> <span class="token keyword">const</span>
+<span class="token punctuation">&#123;</span>
+    segmentsOutVec<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">=</span><span class="token function">transform</span><span class="token punctuation">(</span><span class="token number">0.00f</span><span class="token punctuation">,</span> <span class="token number">0.00f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    segmentsOutVec<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">=</span><span class="token function">transform</span><span class="token punctuation">(</span><span class="token number">0.33f</span><span class="token punctuation">,</span> <span class="token number">0.00f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    segmentsOutVec<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">=</span><span class="token function">transform</span><span class="token punctuation">(</span><span class="token number">0.33f</span><span class="token punctuation">,</span> <span class="token number">0.00f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    segmentsOutVec<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">=</span><span class="token function">transform</span><span class="token punctuation">(</span><span class="token number">0.50f</span><span class="token punctuation">,</span> <span class="token number">0.29f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    
+    segmentsOutVec<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">=</span><span class="token function">transform</span><span class="token punctuation">(</span><span class="token number">0.50f</span><span class="token punctuation">,</span> <span class="token number">0.29f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    segmentsOutVec<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">=</span><span class="token function">transform</span><span class="token punctuation">(</span><span class="token number">0.67f</span><span class="token punctuation">,</span> <span class="token number">0.00f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    
+    segmentsOutVec<span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">=</span><span class="token function">transform</span><span class="token punctuation">(</span><span class="token number">0.67f</span><span class="token punctuation">,</span> <span class="token number">0.00f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    segmentsOutVec<span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">=</span><span class="token function">transform</span><span class="token punctuation">(</span><span class="token number">1.00f</span><span class="token punctuation">,</span> <span class="token number">0.00f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>operator()将transform作为输入，输出到segmentsOutVec<br>
+由ExecutionSignature可知，segmentsOutVec对应ControlSignature的第二个参数SegmentsOut&lt;4&gt;，进一步对应到outpoints数组</p>
+<p>SegmentsOut&lt;4&gt;表示四条直线，每条直线的两端点通过transform类计算</p>
+<blockquote>
+<p>transform类也是一个functor，因此可以像调用函数一样使用transform类</p>
+</blockquote>
+<p>最后，将计算出的四条直线输出到outpoints数组中，完成一次迭代</p>
+]]></content>
+      <categories>
+        <category>cpp</category>
+      </categories>
+      <tags>
+        <tag>高性能计算</tag>
+        <tag>C++</tag>
+        <tag>VTKm</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>C++17——结构化绑定</title>
+    <url>/2022/01/03/cpp/structured-binding/</url>
+    <content><![CDATA[<p>本文内容：</p>
+<ul>
+<li>介绍C++17的新特性：结构化绑定(Structured Binding)</li>
+<li>介绍std::pair和std::tuple</li>
+</ul>
+<span id="more"></span>
+<h2 id="结构化绑定-Structured-Binding">结构化绑定(Structured Binding)</h2>
+<p>从组对、元组与结构体中提取单独的变量；<br>
+其中，提取元素的过程称为<strong>解包</strong>。</p>
+<blockquote>
+<p>auto [var1, var2, …] = &lt;pair, tuple, struct or array expression&gt;<br>
+auto可换为：auto, const auto, const auto&amp;, auto&amp;&amp;<br>
+(尽量使用引用，减少不必要的副本)</p>
+</blockquote>
+<p>使用场景：</p>
+<ul>
+<li>简明地访问map, pair, tuple和自定义struct的内置变量</li>
+<li>函数返回多个变量值(此前通过传入引用类型参数实现)</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//访问map元素</span>
+  std<span class="token double-colon punctuation">::</span>map<span class="token operator">&lt;</span>std<span class="token double-colon punctuation">::</span>string<span class="token punctuation">,</span> size_t<span class="token operator">></span>ani<span class="token punctuation">&#123;</span>
+    <span class="token punctuation">&#123;</span><span class="token string">"zyp"</span><span class="token punctuation">,</span><span class="token number">855</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+    <span class="token punctuation">&#123;</span><span class="token string">"is handsome"</span><span class="token punctuation">,</span> <span class="token number">111</span><span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">for</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">auto</span><span class="token operator">&amp;</span> <span class="token punctuation">[</span>name<span class="token punctuation">,</span> num<span class="token punctuation">]</span> <span class="token operator">:</span> ani<span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+    cout<span class="token operator">&lt;&lt;</span>name<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>num<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+<span class="token comment">// 访问自定义结构体</span>
+<span class="token keyword">struct</span> <span class="token class-name">Student</span><span class="token punctuation">&#123;</span>
+  string name<span class="token punctuation">;</span>
+  <span class="token keyword">unsigned</span> <span class="token keyword">int</span> age<span class="token punctuation">;</span>
+  size_t id<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+vector<span class="token operator">&lt;</span>Student<span class="token operator">></span> students<span class="token punctuation">&#123;</span>
+  <span class="token punctuation">&#123;</span><span class="token string">"zyp"</span><span class="token punctuation">,</span><span class="token number">23</span><span class="token punctuation">,</span><span class="token number">22001111</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+  <span class="token punctuation">&#123;</span><span class="token string">"haha"</span><span class="token punctuation">,</span><span class="token number">22</span><span class="token punctuation">,</span><span class="token number">20193230</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+  <span class="token punctuation">&#123;</span><span class="token string">"cool"</span><span class="token punctuation">,</span><span class="token number">24</span><span class="token punctuation">,</span><span class="token number">23112304</span><span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">for</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">auto</span><span class="token operator">&amp;</span> <span class="token punctuation">[</span>name<span class="token punctuation">,</span>age<span class="token punctuation">,</span>id<span class="token punctuation">]</span><span class="token operator">:</span>students<span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+  cout<span class="token operator">&lt;&lt;</span>name<span class="token operator">&lt;&lt;</span><span class="token string">"'s age is "</span><span class="token operator">&lt;&lt;</span>age<span class="token operator">&lt;&lt;</span><span class="token string">" and id is "</span><span class="token operator">&lt;&lt;</span>id<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">//函数返回多变量</span>
+pair<span class="token operator">&lt;</span>string<span class="token punctuation">,</span><span class="token keyword">int</span><span class="token operator">></span> <span class="token function">getInfo</span><span class="token punctuation">(</span><span class="token keyword">int</span> a<span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+  <span class="token keyword">if</span><span class="token punctuation">(</span>a<span class="token operator">==</span><span class="token number">0</span><span class="token punctuation">)</span> <span class="token keyword">return</span> <span class="token function">make_pair</span><span class="token punctuation">(</span><span class="token string">"failed"</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">else</span> <span class="token keyword">return</span> <span class="token function">make_pair</span><span class="token punctuation">(</span><span class="token string">"success"</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">const</span> <span class="token keyword">auto</span><span class="token operator">&amp;</span> <span class="token punctuation">[</span>status<span class="token punctuation">,</span> value<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">getInfo</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+cout<span class="token operator">&lt;&lt;</span>status<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>value<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+<span class="token keyword">const</span> <span class="token keyword">auto</span><span class="token operator">&amp;</span> <span class="token punctuation">[</span>status1<span class="token punctuation">,</span> value1<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">getInfo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+cout<span class="token operator">&lt;&lt;</span>status1<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>value1<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span></code></pre>
+<h2 id="pair和tuple">pair和tuple</h2>
+<p>pair和tuple均是将多种类型元素进行<strong>整合打包</strong>，其中pair仅能打包两个元素，但tuple无此限制</p>
+<h3 id="pair">pair</h3>
+<p>将<strong>两个</strong>不同数据直接整合为一个数据单元，其原型定义和使用方式如下：</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">class</span> <span class="token class-name">T1</span><span class="token punctuation">,</span> <span class="token keyword">class</span> <span class="token class-name">T2</span><span class="token operator">></span> <span class="token keyword">struct</span> <span class="token class-name">pair</span><span class="token punctuation">;</span>
+
+<span class="token comment">//使用</span>
+std<span class="token double-colon punctuation">::</span>pair<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token punctuation">,</span> string<span class="token operator">></span> data <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">make_pair</span><span class="token punctuation">(</span><span class="token number">855</span><span class="token punctuation">,</span><span class="token string">"zyp"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+std<span class="token double-colon punctuation">::</span>cout<span class="token operator">&lt;&lt;</span>data<span class="token punctuation">.</span>first<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>data<span class="token punctuation">.</span>second<span class="token operator">&lt;&lt;</span>std<span class="token double-colon punctuation">::</span>endl<span class="token punctuation">;</span></code></pre>
+<h3 id="tuple">tuple</h3>
+<p>可将tuple视为pair的<strong>泛化</strong>版本，pair仅支持绑定两个元素，tuple摆脱此限制<br>
+tuple可使用std::tie()解包，同时兼容.first和.second<br>
+std::ignore其占位符作用，表明不提取对应位元素</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">std<span class="token double-colon punctuation">::</span>tuple<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token punctuation">,</span> string<span class="token punctuation">,</span><span class="token keyword">int</span><span class="token punctuation">,</span> string<span class="token operator">></span> data1 <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">make_tuple</span><span class="token punctuation">(</span><span class="token number">855</span><span class="token punctuation">,</span><span class="token string">"zyp"</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token string">"is handsome"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> a<span class="token punctuation">,</span>c<span class="token punctuation">;</span>
+string b<span class="token punctuation">,</span>d<span class="token punctuation">;</span>
+std<span class="token double-colon punctuation">::</span><span class="token function">tie</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span>b<span class="token punctuation">,</span>c<span class="token punctuation">,</span>d<span class="token punctuation">)</span> <span class="token operator">=</span> data1<span class="token punctuation">;</span>
+std<span class="token double-colon punctuation">::</span>cout<span class="token operator">&lt;&lt;</span>data<span class="token punctuation">.</span>first<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>data<span class="token punctuation">.</span>second<span class="token operator">&lt;&lt;</span>std<span class="token double-colon punctuation">::</span>endl<span class="token punctuation">;</span>
+std<span class="token double-colon punctuation">::</span>cout<span class="token operator">&lt;&lt;</span>a<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>b<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>c<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>d<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+
+string b1<span class="token punctuation">,</span>d1<span class="token punctuation">;</span>
+std<span class="token double-colon punctuation">::</span><span class="token function">tie</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span>ignore<span class="token punctuation">,</span>b1<span class="token punctuation">,</span>std<span class="token double-colon punctuation">::</span>ignore<span class="token punctuation">,</span>d1<span class="token punctuation">)</span> <span class="token operator">=</span> data1<span class="token punctuation">;</span>
+std<span class="token double-colon punctuation">::</span>cout<span class="token operator">&lt;&lt;</span>b1<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>d1<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+
+<span class="token comment">//Structured Binding————C++17</span>
+cout<span class="token operator">&lt;&lt;</span><span class="token string">"using structured binding"</span><span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+<span class="token keyword">const</span> <span class="token keyword">auto</span><span class="token operator">&amp;</span> <span class="token punctuation">[</span>value1<span class="token punctuation">,</span>name<span class="token punctuation">,</span>value2<span class="token punctuation">,</span>info<span class="token punctuation">]</span> <span class="token operator">=</span> data1<span class="token punctuation">;</span>
+std<span class="token double-colon punctuation">::</span>cout<span class="token operator">&lt;&lt;</span>value1<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>name<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>value2<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>info<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span></code></pre>
+<h3 id="没啥用的小知识-laughing">没啥用的小知识:laughing:</h3>
+<ul>
+<li>语法糖(syntactic sugar)：更简洁明了地实现某功能，但缺了它不会导致该功能无法实现(锦上添花)</li>
+<li>语法盐(syntactic salt)：一种降低程序员编写出不良代码的概率，但会使代码编写更为繁琐</li>
+</ul>
+]]></content>
+      <categories>
+        <category>cpp</category>
+      </categories>
+      <tags>
+        <tag>C++</tag>
+        <tag>Modern C++</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>类型转换</title>
+    <url>/2022/01/02/cpp/cppcast/</url>
+    <content><![CDATA[<p>最近读源码总遇到各种类型转换，今日来总结一下<br>
+本文涉及：</p>
+<ul>
+<li>上行与下行转换</li>
+<li>static_cast, dynamic_cast和reinterpret_cast</li>
+</ul>
+<span id="more"></span>
+<h2 id="上行与下行转换">上行与下行转换</h2>
+<ul>
+<li>上行转换：将派生类指针或引用转化为基类表示</li>
+<li>下行转换(不安全)：将基类指针或引用转化为派生类表示</li>
+</ul>
+<blockquote>
+<p>将基类理解为父亲，派生类理解为儿子；<br>
+下行转换即将基类指针(父亲)转化为派生类(儿子)，辈分降低了，故理解成下行</p>
+</blockquote>
+<p>以下述代码为例，B为基类(base)，D为派生类(derived)</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">B</span><span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">fun</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    cout<span class="token operator">&lt;&lt;</span><span class="token string">"access base class member: "</span><span class="token operator">&lt;&lt;</span>m_b<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token keyword">int</span> m_b <span class="token operator">=</span> <span class="token number">11</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">class</span> <span class="token class-name">D</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token class-name">B</span></span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token keyword">void</span> <span class="token function">fun</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">override</span>
+  <span class="token punctuation">&#123;</span>
+    cout<span class="token operator">&lt;&lt;</span><span class="token string">"access derived class member: "</span><span class="token operator">&lt;&lt;</span>m_d<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">void</span> <span class="token function">dfun</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    cout<span class="token operator">&lt;&lt;</span><span class="token string">"this is derived class' special part "</span><span class="token operator">&lt;&lt;</span>m_d<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+<span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token keyword">int</span> m_d<span class="token operator">=</span><span class="token number">99</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<h3 id="为什么下行转化不安全？">为什么下行转化不安全？</h3>
+<p>首先需理解派生类与基类的存储数据特点：<br>
+派生类不仅具有自己独特的部分，同时还包含基类部分，即<strong>派生类内存由基类数据与自身独有数据共同组成。</strong><br>
+派生类指针ptrd，既可以访问派生类数据，亦可访问基类数据；<br>
+但基类指针ptrb不能访问派生类独有的数据</p>
+<p>进行下行转化时，将基类指针ptrb转化为派生类类型的ptrd，表现为</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">B<span class="token operator">*</span> ptrb <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token function">b</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+D<span class="token operator">*</span> ptrd <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token function">d</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+D<span class="token operator">*</span> static_ptrb_to_ptrd <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>D<span class="token operator">*</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>ptrb<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//下行转换，不安全，用子类指向基类空间</span>
+static_ptrb_to_ptrd<span class="token operator">-></span><span class="token function">fun</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+static_ptrb_to_ptrd<span class="token operator">-></span><span class="token function">dfun</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>此处将ptrb类型由B* 转化为D*，但ptrb的内容并未发生变化<br>
+即转化后的指针static_ptrb_to_ptrd和ptrb指向同一块内存区域，该内存区域存放<strong>基类B的数据</strong></p>
+<p>但D*类型的指针static_ptrb_to_ptrd默认是可以访问派生类独有部分的<br>
+即static_ptrb_to_ptrd-&gt;dfun()若不在运行时检查，机器认为没有问题</p>
+<p>那么问题来了，在机器实际存储中，基类不包含派生类的数据<br>
+虽然static_ptrb_to_ptrd-&gt;dfun()语法上没有问题，但机器内存中<strong>不包含</strong>dfun()部分<br>
+因此，下行转化不安全。</p>
+<blockquote>
+<p>关键：在机器的实际存储中，基类空间不包含派生类部分，但派生类都包含基类部分</p>
+</blockquote>
+<p>(文末给出详细代码，可动手运行观察各类情况的运行结果)</p>
+<h2 id="三种类型转换">三种类型转换</h2>
+<h3 id="static-cast">static_cast</h3>
+<p>可用于替代C-style中的强制类型转换，static_cast仅在<strong>编译期检查</strong>，多用于非多态的转换。<br>
+上行转换安全，但由于缺少运行期检查，<strong>下行转换不安全</strong>。</p>
+<h3 id="dynamic-cast">dynamic_cast</h3>
+<p>多用于含虚函数的派生类之间转换，可进行<strong>运行时检查</strong>；<br>
+出现下行转化时报错，避免程序产生不安全行为</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">D<span class="token operator">*</span> dynamic_ptrb_to_ptrd <span class="token operator">=</span> <span class="token generic-function"><span class="token function">dynamic_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>D<span class="token operator">*</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>ptrb1<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//运行时检查，报错</span>
+dynamic_ptrb_to_ptrd<span class="token operator">-></span><span class="token function">fun</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+dynamic_ptrb_to_ptrd<span class="token operator">-></span><span class="token function">dfun</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<h3 id="reinterpret-cast">reinterpret_cast</h3>
+<p>最强大灵活，但需程序员自行保证安全性</p>
+<blockquote>
+<p>reinterpret_cast字面意思为&quot;重新解释&quot;，语法上没有限制，甚至可将类指针转化为int指针</p>
+</blockquote>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">A</span><span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token keyword">int</span> m_a1<span class="token operator">=</span><span class="token number">12</span><span class="token punctuation">;</span>
+  <span class="token keyword">int</span> m_a2<span class="token operator">=</span><span class="token number">22</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  A<span class="token operator">*</span> a<span class="token operator">=</span><span class="token keyword">new</span> <span class="token function">A</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  cout<span class="token operator">&lt;&lt;</span>a<span class="token operator">-></span>m_a1<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>a<span class="token operator">-></span>m_a2<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+  <span class="token keyword">int</span><span class="token operator">*</span> r <span class="token operator">=</span> <span class="token generic-function"><span class="token function">reinterpret_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">*</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>a<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  
+  cout <span class="token operator">&lt;&lt;</span><span class="token operator">*</span>r<span class="token operator">&lt;&lt;</span> endl<span class="token punctuation">;</span>
+
+  <span class="token operator">*</span>r <span class="token operator">=</span> <span class="token number">100</span><span class="token punctuation">;</span>
+  cout<span class="token operator">&lt;&lt;</span>a<span class="token operator">-></span>m_a1<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>a<span class="token operator">-></span>m_a2<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>输出结果：</p>
+<pre class="language-none"><code class="language-none">12 22
+12
+100 22</code></pre>
+<p>上述代码将内存中存放class A类型的数据，直接<strong>解释</strong>为int类型；<br>
+对r赋值为100后，改变原本存储空间数据，该存储空间原本存放class A的成员变量m_a1；<br>
+因此，改变r的值，直接影响了A的成员变量m_a1。</p>
+<p><strong>参考代码(自行注释不相关部分)：</strong></p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;iostream></span></span>
+<span class="token keyword">using</span> <span class="token keyword">namespace</span> std<span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> char2int<span class="token punctuation">;</span>
+
+<span class="token keyword">class</span> <span class="token class-name">B</span><span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">fun</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    cout<span class="token operator">&lt;&lt;</span><span class="token string">"access base class member: "</span><span class="token operator">&lt;&lt;</span>m_b<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token keyword">int</span> m_b <span class="token operator">=</span> <span class="token number">11</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">class</span> <span class="token class-name">D</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token class-name">B</span></span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token keyword">void</span> <span class="token function">fun</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">override</span>
+  <span class="token punctuation">&#123;</span>
+    cout<span class="token operator">&lt;&lt;</span><span class="token string">"access derived class member: "</span><span class="token operator">&lt;&lt;</span>m_d<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">void</span> <span class="token function">dfun</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    cout<span class="token operator">&lt;&lt;</span><span class="token string">"this is derived class' special part "</span><span class="token operator">&lt;&lt;</span>m_d<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+<span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token keyword">int</span> m_d<span class="token operator">=</span><span class="token number">99</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">class</span> <span class="token class-name">A</span><span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token keyword">int</span> m_a1<span class="token operator">=</span><span class="token number">12</span><span class="token punctuation">;</span>
+  <span class="token keyword">int</span> m_a2<span class="token operator">=</span><span class="token number">22</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">static_cast</span>
+  <span class="token keyword">char</span> a<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">;</span>
+  cout<span class="token operator">&lt;&lt;</span>char2int<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+  char2int <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>a<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// cout&lt;&lt;char2int&lt;&lt;endl;</span>
+
+  B<span class="token operator">*</span> ptrb1 <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token function">B</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  D<span class="token operator">*</span> ptrd1 <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token function">D</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  ptrb1<span class="token operator">-></span><span class="token function">fun</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  ptrd1<span class="token operator">-></span><span class="token function">fun</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  B<span class="token operator">*</span> static_ptrd_to_ptrb <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>B<span class="token operator">*</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>ptrd1<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//上行转换，安全，用基类指针指向子类空间</span>
+  static_ptrd_to_ptrb<span class="token operator">-></span><span class="token function">fun</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  D<span class="token operator">*</span> static_ptrb_to_ptrd <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>D<span class="token operator">*</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>ptrb1<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//下行转换，不安全，用子类指向基类空间</span>
+  static_ptrb_to_ptrd<span class="token operator">-></span><span class="token function">fun</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  static_ptrb_to_ptrd<span class="token operator">-></span><span class="token function">dfun</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// dynamic_cast</span>
+  D<span class="token operator">*</span> dynamic_ptrb_to_ptrd <span class="token operator">=</span> <span class="token generic-function"><span class="token function">dynamic_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>D<span class="token operator">*</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>ptrb1<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//运行时检查，报错</span>
+  dynamic_ptrb_to_ptrd<span class="token operator">-></span><span class="token function">fun</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  dynamic_ptrb_to_ptrd<span class="token operator">-></span><span class="token function">dfun</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  B<span class="token operator">*</span> dynamic_ptrd_to_ptrb <span class="token operator">=</span> <span class="token generic-function"><span class="token function">dynamic_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>B<span class="token operator">*</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>ptrd1<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//上行转换，安全</span>
+  dynamic_ptrd_to_ptrb<span class="token operator">-></span><span class="token function">fun</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">//reinterpret_cast</span>
+  A<span class="token operator">*</span> a<span class="token operator">=</span><span class="token keyword">new</span> <span class="token function">A</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  cout<span class="token operator">&lt;&lt;</span>a<span class="token operator">-></span>m_a1<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>a<span class="token operator">-></span>m_a2<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+  <span class="token keyword">int</span><span class="token operator">*</span> r <span class="token operator">=</span> <span class="token generic-function"><span class="token function">reinterpret_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">*</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>a<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  cout <span class="token operator">&lt;&lt;</span> <span class="token operator">*</span>r<span class="token operator">&lt;&lt;</span> endl<span class="token punctuation">;</span>
+
+  <span class="token operator">*</span>r <span class="token operator">=</span> <span class="token number">100</span><span class="token punctuation">;</span>
+  cout<span class="token operator">&lt;&lt;</span>a<span class="token operator">-></span>m_a1<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>a<span class="token operator">-></span>m_a2<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+
+  <span class="token keyword">delete</span> a<span class="token punctuation">;</span>
+  <span class="token keyword">delete</span> ptrd1<span class="token punctuation">;</span>
+  <span class="token keyword">delete</span> ptrb1<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>]]></content>
+      <categories>
+        <category>cpp</category>
+      </categories>
+      <tags>
+        <tag>C++</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>双机搭建MPI</title>
+    <url>/2021/12/14/mpi1/</url>
+    <content><![CDATA[<p>本文介绍通过SSH连接两台电脑，并成功运行MPI案例</p>
+<span id="more"></span>
+<h2 id="MPI简介">MPI简介</h2>
+<p>MPI是一个通讯协议，可实现多台机器的并行计算<br>
+通俗来说，原本一台电脑的任务，现分配给多台电脑<strong>协作</strong>同步执行<br>
+众所周知，合作离不开沟通，MPI可以抽象理解成多台电脑间的沟通方式(如同人打电话、meeting等)</p>
+<h2 id="简易MPI搭建">简易MPI搭建</h2>
+<p>实验环境：两台Linux虚拟机（<strong>同一局域网</strong>下两台Linux电脑亦可）</p>
+<h2 id="1-通过SSH连接两台电脑">1 通过SSH连接两台电脑</h2>
+<p>注：两台电脑默认在同一局域网内，否则彼此间无法访问</p>
+<h3 id="1-1-SSH简介">1.1 SSH简介</h3>
+<ol>
+<li>连接时两台电脑分别为服务端和客户端，一般Ubuntu自带openssh-client，即客户端软件，充当服务端的电脑需执行apt install openssh-server安装openssh-server</li>
+<li>客户端执行ssh-keygen生成密钥对，一直按enter的话，默认生成在路径./ssh内，可通过cd ~/.ssh进入</li>
+<li>该目录下两个文件id_rsa、id_rsa.pub；前者为私钥，放在客户端，后者为公钥(public)，应放在服务器端，(我是用U盘拷贝到服务器的)</li>
+</ol>
+<h3 id="1-2-ssh配置文件">1.2 ssh配置文件</h3>
+<ol>
+<li>cd /etc/ssh，移动到对应目录，运行ls，其中客户端配置文件为ssh_config, 服务器端为sshd_config</li>
+<li>一般ssh_config使用默认配置即可</li>
+</ol>
+<h3 id="1-3-sshd的配置文件">1.3 sshd的配置文件</h3>
+<ol>
+<li>使用vim打开sshd_config文件，按i进入编辑模式，找到以下对应设置并更改，注意删除对应的前面#</li>
+</ol>
+<pre class="language-vim" data-language="vim"><code class="language-vim">Port <span class="token number">22</span>	端口号，服务器和客户端相同即可
+ListenAddress <span class="token number">0.0</span><span class="token operator">.</span><span class="token number">0.0</span>	打开监听所有端口
+PermitRootLogin yes	允许远程客户进入根权限
+PublicAuthentication yes 打开密钥对认证模式
+AuthorizedKeysFile <span class="token operator">.</span>ssh<span class="token operator">/</span>yourname<span class="token operator">.</span>pub 名称为yourname<span class="token operator">.</span>pub的公钥放置处
+PasswordAuthentication yes 需要密码认证
+PermitEmptyPasswords yes 不允许空密码</code></pre>
+<ol start="2">
+<li>esc, :x, 完成配置。注意x小写，大写的X是加密文件:smile:</li>
+<li>重新启动ssh、sshd</li>
+</ol>
+<pre class="language-bash" data-language="bash"><code class="language-bash">server <span class="token function">ssh</span> restart
+server sshd restart</code></pre>
+<h3 id="1-4-生成公钥">1.4 生成公钥</h3>
+<p>以下操作<strong>两台电脑</strong>都需要依次执行：</p>
+<ol>
+<li>添加相同用户：adduser mpi，su mpi切换至mpi用户</li>
+<li>运行ssh-keygen -t rsa，在~/.ssh目录下出现后缀名为.pub的文件，将其复制到另一台电脑的~/.ssh目录下，注意文件名称需与sshd_config中设置一致</li>
+<li>运行ifconfig，查看每台的电脑IP<br>
+<img data-src="/pic/mpi1.png" alt="1"></li>
+<li>运行vim /etc/hosts，给IP地址赋别名<br>
+<img data-src="/pic/mpi2.png" alt="2"><br>
+两台电脑hosts文件的设置相同</li>
+<li>在IP地址为node1的电脑上，运行ssh node2尝试连接node2；反之亦然</li>
+</ol>
+<blockquote>
+<p>补充：建议passwd -d mpi将mpi用户的密码删除(如果后续连接不上的话:smile:)</p>
+</blockquote>
+<h2 id="2-设置NFS挂载文件">2 设置NFS挂载文件</h2>
+<p>两台电脑需区分服务器端和客户端，在服务器端创建共享文件夹，将需要共享的文件放于此文件夹内</p>
+<pre class="language-bash" data-language="bash"><code class="language-bash"><span class="token function">mkdir</span> ~/mpi/cloud</code></pre>
+<blockquote>
+<p>服务端与客户端两者文件位置应一致，方便后续运行mpi</p>
+</blockquote>
+<h3 id="2-1-NFS服务端配置">2.1 NFS服务端配置</h3>
+<ol>
+<li>sudo apt install nfs-kernel-server</li>
+<li>vim /etc/exports，在最后一行添加：</li>
+</ol>
+<pre class="language-vim" data-language="vim"><code class="language-vim"><span class="token operator">/</span>home<span class="token operator">/</span>mpi<span class="token operator">/</span>cloud <span class="token operator">*</span><span class="token punctuation">(</span>rw<span class="token punctuation">,</span>sync<span class="token punctuation">,</span>no_root_squash<span class="token punctuation">,</span>no_subtree_check<span class="token punctuation">)</span></code></pre>
+<ol start="3">
+<li>命令行运行exportfs -a</li>
+<li>刷新服务 sudo service nfs-kernel-server restart</li>
+</ol>
+<h3 id="2-2-NFS客户端配置">2.2 NFS客户端配置</h3>
+<ol>
+<li>sudo apt-get install nfs-common</li>
+<li>mkdir cloud</li>
+<li>sudo mount -t nfs node1:/home/mpiuser/cloud ~/cloud</li>
+<li>df -h可查询是否成功挂载</li>
+</ol>
+<p>此时在客户端应该能够看到服务端的共享文件</p>
+<blockquote>
+<p>注：node1为自己在hosts文件中定义的服务端IP别名</p>
+</blockquote>
+<h2 id="3-运行mpirun">3 运行mpirun</h2>
+<p>默认将编译成功的可执行文件(本案例文件名为test)置于共享文件夹cloud中，移动至该目录下执行：</p>
+<pre class="language-bash" data-language="bash"><code class="language-bash">mpirun -np <span class="token number">4</span> -host node1,node2 ./test</code></pre>
+<p>其中:</p>
+<ul>
+<li>-np 4：表明调用4个进程</li>
+<li>-host node1,node2：指定两台机器的IP地址</li>
+</ul>
+]]></content>
+      <categories>
+        <category>HPC</category>
+      </categories>
+      <tags>
+        <tag>MPI</tag>
+        <tag>高性能计算</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>OpenMP(2)——入门</title>
+    <url>/2021/12/14/openmp/openmp2/</url>
+    <content><![CDATA[<p>本文主要内容：</p>
+<ol>
+<li>常见的依赖关系(读后读、写后写、读后写)</li>
+<li>执行不必要的工作实现分支并行</li>
+</ol>
+<span id="more"></span>
+<h1>1 依赖关系</h1>
+<p>并行在<strong>同一时刻</strong>执行所有线程，需保证以<strong>任意顺序</strong>执行线程时，最终的结果一致<br>
+但如果线程之间存在依赖关系，不同顺序执行线程会导致不同的结果<br>
+因此，尽可能地消除依赖是并行的前提</p>
+<h2 id="2-1-循环依赖">2.1 循环依赖</h2>
+<h3 id="2-1-1-读后写">2.1.1 读后写</h3>
+<p>读取元素A之后，下一次迭代会改变A的值<br>
+<strong>需保证先读后写，读到未被修改的初始值</strong></p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span> i<span class="token operator">&lt;</span>n<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span>
+    a<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token operator">=</span>a<span class="token punctuation">[</span>i<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+<span class="token comment">//修改方式，创建一个数组a[]的副本</span>
+<span class="token comment">//副本在迭代中不会被修改，永远是原始值</span>
+<span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span> i<span class="token operator">&lt;</span>n<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span>
+    a<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token operator">=</span>a_copy<span class="token punctuation">[</span>i<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span></code></pre>
+<p>a[i]的值取决于a[i+1]，因此计算a[i]时需保证a[i+1]的值未被修改<br>
+对于a[i+1]而言，需“先读后写”，但并行时难以保证<br>
+可通过创建副本消除依赖</p>
+<h3 id="2-1-2-写后写">2.1.2 写后写</h3>
+<p>对元素A进行多次写入操作，元素A的最终值取决于<strong>最后一次</strong>写入操作</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span> i<span class="token operator">&lt;</span>n<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    a<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token operator">=</span>b<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    a<span class="token punctuation">[</span>i<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">=</span>c<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token comment">//修改建议: 提供副本存储每次迭代的a[i]</span>
+    a_copy<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token operator">=</span>b<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>此处前两次迭代分别处理a[0],a[1]及a[1],a[2]<br>
+这两次迭代均对a[1]进行赋值，因此a[1]最终值取决于两次迭代的顺序，不能直接并行<br>
+同样的，可通过创建副本消除依赖</p>
+<h3 id="2-1-3-写后读">2.1.3 写后读</h3>
+<p>先更改元素A的值再读取，必须保证写操作先完成，否则读到A的旧值</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">;</span> i<span class="token operator">&lt;</span>n<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    b<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token operator">=</span>b<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token operator">+</span>a<span class="token punctuation">[</span>i<span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    a<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token operator">=</span>a<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token operator">+</span>c<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token comment">//重构代码以消除依赖</span>
+b<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">=</span>b<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">+</span>a<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">;</span> i<span class="token operator">&lt;</span>n<span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    a<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token operator">=</span>a<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token operator">+</span>c<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    b<span class="token punctuation">[</span>i<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">=</span>b<span class="token punctuation">[</span>i<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">+</span>a<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+a<span class="token punctuation">[</span>n<span class="token punctuation">]</span><span class="token operator">=</span>a<span class="token punctuation">[</span>n<span class="token punctuation">]</span><span class="token operator">+</span>c<span class="token punctuation">[</span>n<span class="token punctuation">]</span></code></pre>
+<p>上述修改前代码中，b[i]的值取决于a[i-1]的值，即<strong>第i次迭代依赖于第i-1次迭代</strong>(必须保证i-1次迭代先完成)<br>
+可通过重构代码消除依赖</p>
+<h2 id="2-2-任务依赖-并行if语句">2.2 任务依赖(并行if语句)</h2>
+<p>前后两个任务存在依赖关系，可通过执行不必要的工作实现并行化</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">int</span> c<span class="token operator">=</span><span class="token function">fun1</span><span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span>c<span class="token operator">></span>c0<span class="token punctuation">)</span> <span class="token keyword">return</span> c<span class="token operator">+</span><span class="token function">fun2</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">else</span> <span class="token keyword">return</span> c<span class="token punctuation">;</span></code></pre>
+<p>fun1必须执行，fun2可能执行(取决于c是否大于c0)<br>
+设执行fun1需t1秒，执行fun2需t2秒，且实际执行fun2的几率为P<br>
+则串行总时间为t1+t2*P</p>
+<p>改进思路：fun1与fun2同时并行执行，依据结果选择性输出<br>
+设同步开销时间为R，则并行代码运行时间为R+max(t1+t2)<br>
+当R+max(t1+t2) &lt; t1+t2*P时，可提升效率</p>
+<blockquote>
+<p>if分支难以并行，此处将判断语句延后进行，先计算再判断(俗称莽夫执行，干了再说:smirk:)</p>
+</blockquote>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">int</span> c1<span class="token punctuation">,</span> c2<span class="token punctuation">;</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">pragma</span> <span class="token expression">omp parallel sections</span></span>
+<span class="token punctuation">&#123;</span>
+    <span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">pragma</span> <span class="token expression">omp section</span></span>
+    <span class="token punctuation">&#123;</span>c1<span class="token operator">=</span><span class="token function">fun1</span><span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token punctuation">&#125;</span>
+    <span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">pragma</span> <span class="token expression">omp section</span></span>
+    <span class="token punctuation">&#123;</span>c2<span class="token operator">=</span><span class="token function">fun2</span><span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">if</span> <span class="token punctuation">(</span>c1<span class="token operator">></span>c2<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> c1<span class="token operator">+</span>c2<span class="token punctuation">;</span>
+<span class="token keyword">else</span> <span class="token keyword">return</span> c2<span class="token punctuation">;</span></code></pre>
+]]></content>
+      <categories>
+        <category>HPC</category>
+      </categories>
+      <tags>
+        <tag>高性能计算</tag>
+        <tag>OpenMP</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>OpenMP(1)——入门</title>
+    <url>/2021/12/07/openmp/openmp1/</url>
+    <content><![CDATA[<p>本文主要内容：</p>
+<ol>
+<li>使用OpenMP的通用步骤</li>
+<li>任务task的概念</li>
+<li>负载均衡</li>
+</ol>
+<span id="more"></span>
+<p>OpenMP并行一般包含两个步骤：</p>
+<ol>
+<li>划分并行区域：指定并行运行的代码区域，并分配相应数量的线程</li>
+<li>分配任务：将计算任务合理地分配到各线程</li>
+</ol>
+<h1>1 创建并行区域</h1>
+<p>通过parallel指令划分<br>
+常见有for, sections和tasks三种并行类型</p>
+<h2 id="1-1-for：循环结构">1.1 for：循环结构</h2>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//下面语句等效为 划分并行区域+指定循环类型</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">pragma</span> <span class="token expression">omp parallel <span class="token keyword">for</span></span></span></code></pre>
+<h2 id="1-2-sections：非循环结构">1.2 sections：非循环结构</h2>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">pragma</span> <span class="token expression">omp parallel sections</span></span>
+<span class="token punctuation">&#123;</span>
+    <span class="token comment">//多个section嵌套在sections内</span>
+    <span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">pragma</span> <span class="token expression">omp section<span class="token punctuation">&#123;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">&#125;</span> </span></span>
+<span class="token punctuation">&#125;</span></code></pre>
+<h2 id="1-3-tasks：任务">1.3  tasks：任务</h2>
+<p>不同于指令for和sections，task可<strong>动态</strong>定义任务<br>
+线程遇到task指令后开始创建任务，当创建的未分配线程的任务数量达到临界值时，停止创建任务并开始执行任务<br>
+一旦未分配的任务数量足够低时，线程再次开始创建任务</p>
+<blockquote>
+<p>引入task的原因：<br>
+相较于for与section，task可并行实现不规则循环(如do while)与递归函数</p>
+</blockquote>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//通过task递归求斐波那契数列</span>
+<span class="token comment">//由于b[i]的值取决于实际运行，parallel for无法并行下列代码</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">pragma</span> <span class="token expression">omp parallel <span class="token keyword">for</span></span></span>
+<span class="token keyword">for</span><span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">;</span> i<span class="token operator">&lt;</span>m<span class="token punctuation">;</span> i<span class="token operator">+=</span>b<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">&#125;</span>
+
+<span class="token comment">//task实现递归</span>
+<span class="token keyword">int</span> <span class="token function">fib</span><span class="token punctuation">(</span><span class="token keyword">int</span> n<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> result<span class="token punctuation">,</span>i<span class="token punctuation">,</span>j<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>n<span class="token operator">&lt;</span><span class="token number">2</span><span class="token punctuation">)</span> result<span class="token operator">=</span>n<span class="token punctuation">;</span>
+    <span class="token keyword">else</span>
+    <span class="token punctuation">&#123;</span>
+        <span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">pragma</span> <span class="token expression">omp task <span class="token function">shared</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span> <span class="token function">firstprivate</span><span class="token punctuation">(</span>n<span class="token punctuation">)</span> <span class="token keyword">final</span><span class="token punctuation">(</span>n<span class="token operator">&lt;=</span><span class="token number">10</span><span class="token punctuation">)</span> mergeable</span></span>
+        i<span class="token operator">=</span><span class="token function">fib</span><span class="token punctuation">(</span>n<span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">pragma</span> <span class="token expression">omp task <span class="token function">shared</span><span class="token punctuation">(</span>j<span class="token punctuation">)</span> <span class="token function">firstprivate</span><span class="token punctuation">(</span>n<span class="token punctuation">)</span> <span class="token keyword">final</span><span class="token punctuation">(</span>n<span class="token operator">&lt;=</span><span class="token number">10</span><span class="token punctuation">)</span> mergeable</span></span>
+        j<span class="token operator">=</span><span class="token function">fib</span><span class="token punctuation">(</span>n<span class="token operator">-</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">pragma</span> <span class="token expression">omp taskwait </span><span class="token comment">//确保计算f(n)时，f(n-1)与f(n-2)已完成计算</span></span>
+        result<span class="token operator">=</span>i<span class="token operator">+</span>j<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">return</span> result<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">pragma</span> <span class="token expression">omp parallel <span class="token function">shared</span><span class="token punctuation">(</span>n<span class="token punctuation">)</span> </span></span>
+    <span class="token punctuation">&#123;</span>
+        ans<span class="token operator">=</span><span class="token function">fib</span><span class="token punctuation">(</span>n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">pragma</span> <span class="token expression">omp single</span></span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"the ans is %d\n"</span><span class="token punctuation">,</span> ans<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<h1>2 分配线程</h1>
+<p>分配线程有两类方式：</p>
+<ol>
+<li>静态分配：人为显式指定，线程数量固定</li>
+<li>动态分配：系统按实际任务自行动态分配</li>
+</ol>
+<blockquote>
+<p>注：线程数量过多但计算负载小时，切换线程的耗时高于执行任务耗时，导致并行效率低下</p>
+</blockquote>
+<h1>3 工作分配与负载平衡</h1>
+<p>在划分出并行区域后，需考虑如何将任务分配给不同的并行区域<br>
+<strong>基本原则</strong>：同一时刻，尽可能多的CPU核心同时工作，<strong>避免存在空闲核心</strong>(老资本家了:grin:)</p>
+<h2 id="3-1-为什么需要负载平衡">3.1 为什么需要负载平衡</h2>
+<p><strong>原因一：不同迭代次数的计算量不同</strong><br>
+考虑以下循环</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">pragma</span> <span class="token expression">omp parallel <span class="token keyword">for</span></span></span>
+<span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span> i<span class="token operator">&lt;</span><span class="token number">100000</span><span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span>
+    temp<span class="token operator">=</span>i<span class="token operator">*</span>i<span class="token punctuation">;</span></code></pre>
+<p>如果简单地将任务<strong>按数量均匀分配</strong>给多个线程，考虑负责i=99999的线程，需计算99999*99999，而分配到i=2的线程仅需计算2*2，此两者线程负载是显著不同的。</p>
+<p>因此，直接按任务数量分配是不可行的，因为无法保证每个任务的计算量一致</p>
+<p><strong>原因二：划分的误差随核数增多而增大</strong><br>
+假设有一个执行时间为16个时间单位的程序，如果划分误差为1个时间单位:<br>
+4核CPU上加速比16/(4+1)=3.2，是理想加速比的3.2/4=80%<br>
+16核CPU上加速比16/(1+1)=8，是理想加速比的8/16=50%</p>
+<blockquote>
+<p>随着核心数增加，效率下降的比例更加明显</p>
+</blockquote>
+<h2 id="3-2-循环工作量的划分">3.2 循环工作量的划分</h2>
+<ol>
+<li>静态负载平衡：人工划分工作，但无法得到任务实际运行耗时，因此无法保证<strong>实际运行时</strong>各个线程耗时相同</li>
+<li>动态负载平衡：在任务执行过程中动态分配，人工设定调度策略后由编译器实现</li>
+</ol>
+<p><strong>策略分类：</strong><br>
+static：静态调度，朴素地按任务数量划分<br>
+dynamic：动态调度，运行按实际情况使分配任务<br>
+guide：类似动态调度，但刚开始划分的任务块较大，随后逐渐减小</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//schedule("类型","大小")</span>
+<span class="token function">schedule</span><span class="token punctuation">(</span><span class="token keyword">static</span><span class="token punctuation">,</span>size<span class="token punctuation">)</span></code></pre>
+<blockquote>
+<p>动态调度会产生<strong>额外开销</strong>，但可以依据实际情况平衡负载</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>HPC</category>
+      </categories>
+      <tags>
+        <tag>高性能计算</tag>
+        <tag>OpenMP</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>CUDA-共享内存总结</title>
+    <url>/2021/12/05/cuda/share_memory/</url>
+    <content><![CDATA[<p>存储体冲突会导致性能下降，填充可有效避免冲突，并提升性能</p>
+<span id="more"></span>
+<h1>1 共享内存</h1>
+<p>GPU存在两种类型的存储：板载内存和片上内存。<br>
+全局内存属于板载内存，延迟大；共享内存属于片上内存，延迟低带宽大<br>
+使用共享内存，旨在降低访问全局内存的次数，避免较大的延迟，提升性能</p>
+<h1>2 存储体冲突与填充</h1>
+<h2 id="2-1-存储体冲突">2.1 存储体冲突</h2>
+<p>共享内存被划分为32个存储体（对应一个线程束内存在32个线程），它们可以被同时访问。当多个地址请求落在同一个存储体中，会发生存储体冲突。<br>
+<img data-src="/pic/cuda1.png" alt="1"><br>
+如上图所示，Bank0~31表示32个存储体，若同一时刻有两个线程分别访问Bank0下的地址（序号0、32、64、96），就会发生存储体冲突，导致性能降低。<br>
+理想状态下，同一时刻应访问序号0至31。由于0至31属于不同的存储体，因此不会产生存储体冲突，且能够充分利用带宽。</p>
+<h2 id="2-2-填充以避免冲突">2.2 填充以避免冲突</h2>
+<p>当需要按列读取元素时，由于每一列隶属于同一个存储体，因此会产生存储体冲突。借助填充手段，可以将原先属于同一存储体的列元素，打乱到不同存储体中，从而避免存储体冲突。<br>
+<img data-src="/pic/cuda2.png" alt="2"><br>
+为节省篇幅，以5个存储体为例（实际上为32个）。 当按列读取第一列时，所有元素均在存储体Bank0中，发生存储体冲突。 假想在末列填充一列占位内存，等价于每隔5个元素填充一次，则填充后的存储体结构如下图所示：<br>
+<img data-src="/pic/cuda3.png" alt="3"></p>
+<blockquote>
+<p>注意：</p>
+<ol>
+<li>填充是我们假想在原有最后一个存储体后增加一列，实际上存储体数量是固定的（32，本文假设为5）</li>
+<li>填充的内存不存储元素，只起到占位符的作用，以调整原始元素的位置</li>
+</ol>
+</blockquote>
+<h1>3 两种填充方式：静态与动态</h1>
+<p>下文为实现矩阵转置的关键代码：对于一个存储的二维矩阵，按列读取即可实现矩阵转置<br>
+尝试两种填充方法，避免因按列读取产生的存储体冲突</p>
+<h2 id="3-1-静态填充">3.1 静态填充</h2>
+<pre class="language-c" data-language="c"><code class="language-c"><span class="token comment">//PAD为填充量，对应上述图中末尾新增一列</span>
+__shared__ <span class="token keyword">int</span> tile<span class="token punctuation">[</span>DIMY<span class="token punctuation">]</span><span class="token punctuation">[</span>DIMX<span class="token operator">+</span>PAD<span class="token punctuation">]</span>
+<span class="token keyword">unsigned</span> <span class="token keyword">int</span> idx<span class="token operator">=</span>threadIdx<span class="token punctuation">.</span>y<span class="token operator">*</span>blockDim<span class="token punctuation">.</span>x<span class="token operator">+</span>threadIdx<span class="token punctuation">.</span>x<span class="token punctuation">;</span>
+<span class="token comment">// 按行将全局线程索引号，存入共享内存tile中</span>
+tile<span class="token punctuation">[</span>threadIdx<span class="token punctuation">.</span>y<span class="token punctuation">]</span><span class="token punctuation">[</span>threadIdx<span class="token punctuation">.</span>x<span class="token punctuation">]</span><span class="token operator">=</span>idx<span class="token punctuation">;</span>
+<span class="token function">__syncthreads</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">//按列读取tile中的元素，且不会产生存储体冲突</span>
+out<span class="token punctuation">[</span>idx<span class="token punctuation">]</span><span class="token operator">=</span>tile<span class="token punctuation">[</span>threadIdx<span class="token punctuation">.</span>x<span class="token punctuation">]</span><span class="token punctuation">[</span>threadIdx<span class="token punctuation">.</span>y<span class="token punctuation">]</span><span class="token punctuation">;</span></code></pre>
+<p>针对原始大小已知的共享内存，借助下图解释代码：<br>
+<img data-src="/pic/cuda4.png" alt="4"><br>
+图一为想象图，可帮助我们逻辑上更好地理解，实际上图一所示的情形并不存在，GPU中实际的存储情况为图二所示。<br>
+我们可以假定图一和图二是等价的。想象中的图一，在GPU中自动对应为图二。</p>
+<pre class="language-c" data-language="c"><code class="language-c">tile<span class="token punctuation">[</span>threadIdx<span class="token punctuation">.</span>y<span class="token punctuation">]</span><span class="token punctuation">[</span>threadIdx<span class="token punctuation">.</span>x<span class="token punctuation">]</span><span class="token operator">=</span>idx<span class="token punctuation">;</span></code></pre>
+<p>上句将线程号依次存入图一中所示的位置，填充padding列并不会有数值存入。（因为padding列所有坐标，不存在对应的threadIdx.x和threadIdx.y。 GPU内实际存储不会出现图一情况，而是图二所示。</p>
+<pre class="language-c" data-language="c"><code class="language-c">out<span class="token punctuation">[</span>idx<span class="token punctuation">]</span><span class="token operator">=</span>tile<span class="token punctuation">[</span>threadIdx<span class="token punctuation">.</span>x<span class="token punctuation">]</span><span class="token punctuation">[</span>threadIdx<span class="token punctuation">.</span>y<span class="token punctuation">]</span><span class="token punctuation">;</span></code></pre>
+<p>读取时也是按图一去理解更容易，如果按照图二去看，记住padding元素没有被线程访问。</p>
+<blockquote>
+<p>计算机中内存的存储是线性的，二维结构只是帮助我们逻辑上更好地理解</p>
+</blockquote>
+<h2 id="3-2-动态填充">3.2 动态填充</h2>
+<pre class="language-c" data-language="c"><code class="language-c"><span class="token comment">//填充动态共享内存</span>
+<span class="token keyword">extern</span> __shared__ <span class="token keyword">int</span> tile<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token comment">//求出全局线程号</span>
+<span class="token keyword">unsigned</span> <span class="token keyword">int</span> idx <span class="token operator">=</span> threadIdx<span class="token punctuation">.</span>y<span class="token operator">*</span>blockDim<span class="token punctuation">.</span>x<span class="token operator">+</span>threadIdx<span class="token punctuation">.</span>x<span class="token punctuation">;</span>
+<span class="token comment">//建立线程与内存之间的映射(非填充时）</span>
+<span class="token comment">//实现了坐标转置</span>
+<span class="token keyword">unsigned</span> <span class="token keyword">int</span> icol <span class="token operator">=</span> idx <span class="token operator">%</span> blockDim<span class="token punctuation">.</span>y<span class="token punctuation">;</span>
+<span class="token keyword">unsigned</span> <span class="token keyword">int</span> irow <span class="token operator">=</span> idx <span class="token operator">/</span> blockDim<span class="token punctuation">.</span>y<span class="token punctuation">;</span>
+<span class="token comment">//填充后的索引映射关系会发生改变</span>
+<span class="token keyword">unsigned</span> <span class="token keyword">int</span> row_idx<span class="token operator">=</span>threadIdx<span class="token punctuation">.</span>y<span class="token operator">*</span><span class="token punctuation">(</span>PAD<span class="token operator">+</span>blockDim<span class="token punctuation">.</span>x<span class="token punctuation">)</span><span class="token operator">+</span>threadIdx<span class="token punctuation">.</span>x<span class="token punctuation">;</span>
+<span class="token keyword">unsigned</span> <span class="token keyword">int</span> col_idx<span class="token operator">=</span>icol<span class="token operator">*</span><span class="token punctuation">(</span>PAD<span class="token operator">+</span>blockDim<span class="token punctuation">.</span>x<span class="token punctuation">)</span><span class="token operator">+</span>irow<span class="token punctuation">;</span>
+<span class="token comment">//tile[]是被填充的共享内存</span>
+tile<span class="token punctuation">[</span>row_idx<span class="token punctuation">]</span><span class="token operator">=</span>idx<span class="token punctuation">;</span> <span class="token comment">//按行将idx存入共享内存，避免存储体冲突</span>
+<span class="token function">__syncthreads</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+out<span class="token punctuation">[</span>idx<span class="token punctuation">]</span><span class="token operator">=</span>tile<span class="token punctuation">[</span>col_idx<span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token comment">//按列读取, 填充避免了存储体冲突</span></code></pre>
+<p>row_idx将线程号对应到上述图一所示的位置，padding位显然没有任何线程访问<br>
+至此，成功实现矩阵转置且避免存储体冲突带来的性能下降</p>
+<h1>4 结语</h1>
+<p>填充的关键在于理解上文中图一和图二的联系：图一在计算机存储中不存在，但能够帮助我们更容易地理解填充过程。可以直接默认计算机将图一直接转化为图二，我们可以利用图一去辅助理解编写程序。</p>
+<p><strong>参考资料：</strong><br>
+本文图片素材截取自<a href="https://face2ai.com/">谭升的博客</a></p>
+]]></content>
+      <categories>
+        <category>HPC</category>
+      </categories>
+      <tags>
+        <tag>高性能计算</tag>
+        <tag>CUDA</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Eigen库与数值分析基础</title>
+    <url>/2021/12/05/math/matrix/</url>
+    <content><![CDATA[<p>本文介绍LU分解、QR分解、Householder反射及SVD分解<br>
+并借助Eigen库实现快速计算</p>
+<span id="more"></span>
+<h1>1 LU分解</h1>
+<p>LU分解是高斯消去法的矩阵表示，将系数阵A分解为下三角矩阵L和上三角矩阵U的乘积，多用于求解问题$Ax=b$：</p>
+<blockquote>
+<p>$\because Ax=b, A=LU$<br>
+$\therefore LUx=b$<br>
+令$c=Ux$，求解$Lc=b$得到$c$<br>
+接着求解$Ux=c$，得到解$x$</p>
+</blockquote>
+<h2 id="1-1-优点">1.1 优点</h2>
+<blockquote>
+<p>当n较大时，LU分解计算复杂度低于高斯分解</p>
+</blockquote>
+<p>传统高斯分解在消元步骤，需同时处理$A,b$<br>
+但LU分解在消元过程中(解A=LU)不需处理b，将A与b隔离计算<br>
+考虑给定一批问题(实际应用中广泛存在这类问题)：</p>
+<div>
+$$
+\begin{aligned}
+Ax=b_1 \\ 
+Ax=b_2 \\
+\vdots \\
+Ax=b_k
+\end{aligned}
+$$
+</div>
+<p>右端向量为不同的$b_i$,当$A$为n*n的矩阵时，高斯消去约$ kn^3 \over 3 $次运算，而LU分解约为$ {n^3 \over 3} + kn^2$ 次运算</p>
+<h2 id="1-2-LU模块">1.2 LU模块</h2>
+<p>LU模块包含PartialPivLU和FullPivLU两个类，分别对矩阵$A$进行不完全旋转($A=PLU$)和完全旋转变换($A=P^{-1}LUQ{-1}$)</p>
+<p>使用方法：</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//求解Ax=b</span>
+x<span class="token operator">=</span>A<span class="token punctuation">.</span><span class="token function">fullPivLu</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">solve</span><span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<h1>2 QR分解</h1>
+<p>预备知识: 任意给定一组n维向量，Gram-Schmidt方法可求出该组向量张成的空间正交坐标系。即给定k个输入向量，可输出k个<strong>互相正交</strong>的向量<br>
+Gram-Schmidt法结果为：<br>
+$$(v_1|\dots|v_k)=(q_1|\dots|q_k)R_{k*k}$$<br>
+其中$R$为上三角矩阵，$q_1 \dots q_k$正交</p>
+<p>可以将正交向量矩阵$q_1 \dots q_k$扩充至$R^n$的一组完备基(即将n-k个格外向量加入${v_i}$)，此时：<br>
+$$(v_1|\dots|v_k)=(q_1|\dots|q_n)R_{n*k}$$<br>
+该矩阵方程即为$A=(v_1|\dots|v_k)$的QR分解</p>
+<h2 id="2-1-Householder反射">2.1 Householder反射</h2>
+<p>相较于Gram-Schmidt法,Householder反射<strong>更加稳定高效</strong>实现QR分解</p>
+<blockquote>
+<p>设向量x和w满足$||x||_2=||w||_2$,</p>
+</blockquote>
+<p>则存在向量v，使$H=I-2{vv^T \over v^Tv}$为对称正交矩阵，<br>
+且$Hw=x$,$v=w-x$</p>
+<p>(这里建议结合图形理解，但我懒得画了)</p>
+<blockquote>
+<p><strong>推导过程：</strong><br>
+给定向量$x$，欲确定<strong>相同长度</strong>的新向量$w$，通过给出矩阵$H$实现$Hx=w$<br>
+定义向量$v=w-x$，考虑投影矩阵<br>
+$$P={vv^T \over v^Tv}$$<br>
+则$$H=I-2P$$<br>
+满足$Hx=w$，且$H$是对称正交矩阵，即$H^TH=I$</p>
+</blockquote>
+<blockquote>
+<p>将向量投影到坐标轴上，可在矩阵中引入多个零</p>
+</blockquote>
+<h3 id="Householder反射求解QR分解">Householder反射求解QR分解</h3>
+<p>以$A=QR$为例，设$x_1$为$A$的第一列，令$w=\pm(||x_1||_2,0,\dots,0)$是沿第一坐标轴且长度相等的向量，则可以构造Householder反射，使$H_1x=w$，此时$H_1A$将$A$变化为：<br>
+<img data-src="/pic/h1.png" alt="1"><br>
+此时为矩阵$A$引入0，继续进行下去：<br>
+<img data-src="/pic/h2.png" alt="2"><br>
+<img data-src="/pic/h3.png" alt="3"><br>
+此时有：<br>
+$$H_3H_2H_1A=R$$<br>
+$R$是上三角矩阵，左乘n个Householder反射的逆($H$对称正交，有$H^{-1}=H$)，将结果重写为：<br>
+$$A=H_1H_2H_3R=QR$$<br>
+其中$Q=H_1H_2H_3$</p>
+<h2 id="QR分解的作用">QR分解的作用</h2>
+<h3 id="求解方程组-Ax-b">求解方程组$Ax=b$</h3>
+<p>分解$A=QR$，原方程变为$Rx=Q^\mathrm{T}b$<br>
+$R$为上三角矩阵且对角线元素非零，但花费时间约为LU分解的3倍</p>
+<h3 id="最小二乘">最小二乘</h3>
+<p>给定m<em>n不相容方程组<br>
+$$Ax=b$$<br>
+分解$A=QR$，并设<br>
+$$\hat{R}=R的上n</em>n子矩阵 \<br>
+\hat{d}=d=Q^Tb的前n分量$$<br>
+解$\hat{R}\overline{x}=\hat{d}得到最小二乘解\overline{x}$</p>
+<blockquote>
+<p>最小二乘思想的核心是<strong>误差最小化</strong></p>
+</blockquote>
+<h3 id="计算特征值">计算特征值</h3>
+<p>QR算法可同时求出所有特征值</p>
+<p>实Schur形式矩阵的特征值即为对角分块矩阵的特征值</p>
+<h2 id="QR模块">QR模块</h2>
+<p>主要包含三个：</p>
+<ol>
+<li>householderQR()：$A=QR$，最快最不稳定</li>
+<li>colPivHouseholderQR()：$AP=QR$</li>
+<li>fullPivHouseholderQR()：$PAP’=QR$，最慢最稳定</li>
+</ol>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//householderQR()</span>
+<span class="token comment">//this is faster, but less numerically stable and less feature-full than colPivHouseholderQR() and fullPivHouseholderQR()</span>
+
+<span class="token comment">//compute an unitary matrix Q(or thin Q)</span>
+HouseholderQR<span class="token operator">&lt;</span>MatrixXf<span class="token operator">></span> <span class="token function">qr</span><span class="token punctuation">(</span>A<span class="token punctuation">)</span><span class="token punctuation">;</span>
+Q<span class="token punctuation">.</span>qr<span class="token punctuation">.</span><span class="token function">householderQ</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+thinQ<span class="token operator">=</span>qr<span class="token punctuation">.</span><span class="token function">householderQ</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">*</span>thinQ<span class="token punctuation">;</span>
+
+<span class="token comment">//find a solution x to the equation Ax=b</span>
+Matrix3f x<span class="token operator">=</span>A<span class="token punctuation">.</span><span class="token function">householderQR</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">solve</span><span class="token punctuation">(</span>y<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">assert</span><span class="token punctuation">(</span>y<span class="token punctuation">.</span><span class="token function">isApprox</span><span class="token punctuation">(</span>m<span class="token operator">*</span>x<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">//or use another method to check the ans</span>
+<span class="token keyword">bool</span> a_solution_exists<span class="token operator">=</span><span class="token punctuation">(</span>A<span class="token operator">*</span>result<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">isApprox</span><span class="token punctuation">(</span>b<span class="token punctuation">,</span>precision<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">//colPivHouseholderQR()和fullPivHouseholderQR()的使用方法类似householder</span></code></pre>
+<h1>SVD分解</h1>
+<p>对于m矩阵$A_{m* n}$，设矩阵$U_{m* m}$,$V_{n* n}$和对角阵$S_{m* n}$，其中$U$的列为左奇异向量$u_i$，$V$的列为右奇异向量$v_i$，$S$的对角元素为奇异值$s_i$，则矩阵$A$的奇异值分解(SVD)是：<br>
+$$A=USV^T$$</p>
+<h2 id="SVD作用">SVD作用</h2>
+<p>作用来源于SVD的关键性质：</p>
+<blockquote>
+<p><strong>秩1矩阵近似</strong><br>
+矩阵$A$可写为秩1矩阵之和：<br>
+$$A=\sum_{i=1}^{r}s_iu_iv_i^T$$<br>
+$r$为矩阵的秩，$u_i, v_i$分别为$U,V$的第$i$列<br>
+<strong>通过有选择地保留前面p项(p&lt;r)，即是A的最佳最小二乘近似</strong></p>
+</blockquote>
+<h3 id="求矩阵的秩-线性无关的向量数">求矩阵的秩(线性无关的向量数)</h3>
+<p>矩阵$A=USV^T$的秩是$S$中非零元素个数<br>
+($U,V^T$均可逆，因此$rank(A)=rank(S)$)</p>
+<h3 id="降维">降维</h3>
+<p>目的：设$a_1,\dots,a_n$构成一批m维向量，希望用p&lt;m维的n个向量代替$a_1,\dots,a_n$，同时使相关误差最小化</p>
+<p>设数据向量为$A=(a_1|\dots|a_n)$的列，$e_j$表示第$j$个基本基向量，则$Ae_j=a_j$<br>
+取前$p$项近似矩阵$A$，则可通过<br>
+$$a_j=Ae_j\approx A_pe_j$$<br>
+将$a_j$投影到由$U$的列$u_1,\dots,u_p$张成的p维空间中</p>
+<blockquote>
+<p>$a_1\dots a_n$到它们的最佳最小二乘$p$维子空间的投影就是最佳秩$p$近似矩阵$A_p$</p>
+</blockquote>
+<h3 id="压缩">压缩</h3>
+<p>同样利用<strong>秩1和近似</strong>展开式，若$A$是n*n矩阵，可通过去掉展开式的最后几项(带有较小的$s_i$)进行有损压缩，展开式每一项需2n+1个数存储或传送<br>
+例如n=8，原矩阵由64个数确定，但我们可仅通过2n+1=17个数存储第一项(第一项截取了原始的绝大多数信息，因为第一个奇异值最大)</p>
+<h2 id="计算SVD">计算SVD</h2>
+<h2 id="SVD模块">SVD模块</h2>
+<h3 id="JacobiSVD">JacobiSVD</h3>
+<p>对于小矩阵精确快速，但对于大矩阵非常慢</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">JacobiSVD<span class="token operator">&lt;</span>MatrixXf<span class="token operator">></span> <span class="token function">svd</span><span class="token punctuation">(</span>m<span class="token punctuation">,</span> ComputeThinU <span class="token operator">|</span> ComputeThinV<span class="token punctuation">)</span><span class="token punctuation">;</span>
+cout<span class="token operator">&lt;&lt;</span>svd<span class="token punctuation">.</span><span class="token function">singularValues</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//求奇异值</span>
+cout<span class="token operator">&lt;&lt;</span>svd<span class="token punctuation">.</span>matrixU<span class="token operator">&lt;&lt;</span>endl<span class="token operator">&lt;&lt;</span>svd<span class="token punctuation">.</span>matrixV<span class="token punctuation">;</span> <span class="token comment">//求矩阵U,V</span>
+cout<span class="token operator">&lt;&lt;</span>svd<span class="token punctuation">.</span><span class="token function">solve</span><span class="token punctuation">(</span>rhs<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//计算m*h=rhs的最小二乘解</span>
+</code></pre>
+<h3 id="BDCSVD">BDCSVD</h3>
+<p>采取递归分治策略，可快速处理大矩阵<br>
+对于小矩阵直接用JacobiSVD，大矩阵使用BDCSVD更快</p>
+<blockquote>
+<p>注：GCC的-ffast-math选项会显著降低精度</p>
+</blockquote>
+<h3 id="参考资料：">参考资料：</h3>
+<p>[1] Timothy Sauer. umerical Analysis[M]. 2014.<br>
+[2] Eigen官网: <a href="https://eigen.tuxfamily.org">https://eigen.tuxfamily.org</a></p>
+]]></content>
+      <categories>
+        <category>math</category>
+      </categories>
+      <tags>
+        <tag>高性能计算</tag>
+        <tag>数理基础</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>RTTI与Union类</title>
+    <url>/2021/11/24/cpp/regexAndRandom/</url>
+    <content><![CDATA[<p>挖坑待补充</p>
+<span id="more"></span>
+<h2 id="1-运行时类型识别-run-time-type-identification-RTTI">1 运行时类型识别(run-time type identification, RTTI)</h2>
+<h2 id="2-union">2 union</h2>
+]]></content>
+  </entry>
+  <entry>
+    <title>重载运算符与类型转换</title>
+    <url>/2021/11/19/cpp/cpp2operator/</url>
+    <content><![CDATA[<p>本文主要介绍几个印象深刻的点：</p>
+<ol>
+<li>成员或非成员函数重载运算符的选择</li>
+<li>++i与i++的实现细节</li>
+<li>while(cin&gt;&gt;i)的原理</li>
+</ol>
+<span id="more"></span>
+<h2 id="1-重载运算符">1 重载运算符</h2>
+<p>背景：如果我们自定义一个类A，A中有两个成员mem1和mem2，我们希望将A的两个不同实例相加时，对应两个成员变量能够相加</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">A a1<span class="token punctuation">;</span>
+A a2<span class="token punctuation">;</span>
+A a3<span class="token punctuation">;</span>
+则a3<span class="token operator">=</span>a1<span class="token operator">+</span>a2实现为：
+<span class="token punctuation">&#123;</span>
+    a3<span class="token punctuation">.</span>mem1<span class="token operator">=</span>a1<span class="token punctuation">.</span>mem1<span class="token operator">+</span>a2<span class="token punctuation">.</span>mem1<span class="token punctuation">;</span>
+    a3<span class="token punctuation">.</span>mem2<span class="token operator">=</span>a1<span class="token punctuation">.</span>mem2<span class="token operator">+</span>a2<span class="token punctuation">.</span>mem2<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>普通的内置加法运算不能自适应我们自定义的类A，因此我们需重新定义加法运算符</p>
+<p>类似函数重载，<strong>重载运算符即重新定义运算符执行过程</strong>，本质上是一个函数调用</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">A</span><span class="token punctuation">&#123;</span>
+<span class="token keyword">int</span> mem1<span class="token punctuation">;</span>
+<span class="token keyword">int</span> mem2<span class="token punctuation">;</span>
+
+<span class="token punctuation">&#125;</span>
+A<span class="token double-colon punctuation">::</span><span class="token keyword">operator</span><span class="token operator">+</span><span class="token punctuation">(</span>A<span class="token double-colon punctuation">::</span>mem1<span class="token punctuation">,</span> A<span class="token double-colon punctuation">::</span>mem2<span class="token punctuation">)</span>
+
+</code></pre>
+<h3 id="1-1-成员与非成员的选择">1.1 成员与非成员的选择</h3>
+<p>使用重载运算符，<strong>本质上是一次函数调用</strong>，两者核心差异体现在参数调用上</p>
+<h4 id="1-1-1-非成员函数形式">1.1.1 非成员函数形式</h4>
+<p>由于“+”是二元运算符，使用时有两个参数(如2+3，2和3均是参数)。传递给operator+时，左数作为第一个函数参数，右数作为第二个</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">a1<span class="token operator">+</span>a2<span class="token punctuation">;</span>
+<span class="token comment">//等价于：</span>
+<span class="token keyword">operator</span><span class="token operator">+</span><span class="token punctuation">(</span>a1<span class="token punctuation">,</span>a2<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<h4 id="1-1-2-成员函数形式">1.1.2 成员函数形式</h4>
+<p>成员函数形式的重载运算符，将左侧参数传给this指针</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">a1<span class="token operator">+</span>a2<span class="token punctuation">;</span>
+<span class="token comment">//等价于</span>
+a1<span class="token punctuation">.</span><span class="token keyword">operator</span><span class="token punctuation">(</span>a2<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<h4 id="1-1-3-如何选择？">1.1.3 如何选择？</h4>
+<p>operator+操作俩混合类型对象时需注意：<strong>加法是对称的</strong></p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">string s<span class="token operator">=</span><span class="token string">"ha"</span><span class="token punctuation">;</span> <span class="token comment">//string内置"+",用于连接两个字符串</span>
+string t1<span class="token operator">=</span>s<span class="token operator">+</span><span class="token string">"haha"</span><span class="token punctuation">;</span> <span class="token comment">//正确，等价于s.operator+("haha")</span>
+string t2<span class="token operator">=</span><span class="token string">"haha"</span><span class="token operator">+</span>s<span class="token punctuation">;</span> <span class="token comment">//错误，等价于"haha".operator(s)</span></code></pre>
+<p>由于operator+重载形式为成员函数，调用时需将左侧参数绑定至this指针<br>
+而“haha”是const char类型，内部不具有operator+的成员函数</p>
+<blockquote>
+<p>使用重载运算符实质上是一次函数调用，而成员或非成员函数形式的差异，在于第一个参数的绑定方式</p>
+</blockquote>
+<h2 id="2-前置与后置递增">2 前置与后置递增</h2>
+<p>++i和i++使用上的具体差异已众所周知，是什么导致它们的返回值不同呢？</p>
+<h3 id="2-1-代码复用思想">2.1 代码复用思想</h3>
+<p>程序设计时，如果有某个已存在的函数可实现现阶段的需求<br>
+那么理想的方式是直接调用该函数<br>
+实际上，<strong>后置递增i++复用前置递增++i</strong>，即在定义i++的时候，调用已定义的++i</p>
+<h3 id="2-2-实现细节">2.2 实现细节</h3>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">A<span class="token operator">&amp;</span> A<span class="token double-colon punctuation">::</span><span class="token keyword">operator</span><span class="token operator">++</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token comment">//异常处理</span>
+    <span class="token operator">++</span>curr<span class="token punctuation">;</span> <span class="token comment">//此处++调用内置版本</span>
+    <span class="token keyword">return</span> <span class="token operator">*</span><span class="token keyword">this</span>
+<span class="token punctuation">&#125;</span>
+
+A A<span class="token double-colon punctuation">::</span><span class="token keyword">operator</span><span class="token operator">++</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    A ret<span class="token operator">=</span><span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">;</span>
+    <span class="token operator">++</span><span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">;</span> <span class="token comment">//调用自定义类A内部的++，同时进行异常检查</span>
+    <span class="token keyword">return</span> ret<span class="token punctuation">;</span> <span class="token comment">//返回副本</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<blockquote>
+<ol>
+<li>定义后置operator++()时，存在一个不会被使用的int参数，仅为区分前置后置</li>
+<li>后置调用前置++代码，且<strong>返回的是执行递增前的副本</strong></li>
+</ol>
+</blockquote>
+<h2 id="3-while-cin-i">3 while(cin&gt;&gt;i)</h2>
+<p>我第一次见到这个表达式就很好奇，为什么cin&gt;&gt;i能放在while条件语句中，并可读取全部的输入数据。</p>
+<h3 id="3-1-类型转换运算符">3.1 类型转换运算符</h3>
+<p>构造函数将算术类型的值转化为类，类型转换运算符<strong>将类转化为算数类型</strong></p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">A</span><span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token function">A</span><span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token punctuation">)</span><span class="token punctuation">&#123;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+    <span class="token keyword">operator</span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span><span class="token keyword">return</span> val<span class="token punctuation">;</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token keyword">private</span><span class="token operator">:</span>
+    std<span class="token double-colon punctuation">::</span>size_t val<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>A a(1); 将int型参数变为自定义的class A<br>
+a+1; 此时调用类型转换运算符，将a转为int类型</p>
+<h3 id="3-2-显式类型转换">3.2 显式类型转换</h3>
+<p>一般较少提供类型转换，但定义向bool类型的转换较为常见<br>
+考虑一种情况：</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">int</span> i<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">;</span>
+cin<span class="token operator">&lt;&lt;</span>i<span class="token punctuation">;</span></code></pre>
+<p>cin不含&lt;&lt;运算符，此处转化为bool类型，等价于将bool类型左移2位，导致意外情况，借助显式类型转换即可</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">explicit</span> <span class="token keyword">operator</span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span><span class="token keyword">return</span> val<span class="token punctuation">;</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token comment">//使用时：</span>
+<span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>a<span class="token punctuation">)</span><span class="token operator">+</span><span class="token number">3</span><span class="token punctuation">;</span></code></pre>
+<p>编译器一般不会将显式类型转换运算符用于隐式类型转换</p>
+<p>那么，回到最初的问题，显然cin&gt;&gt;i中cin被内置的类型转换函数转换为bool类型，才能用于条件表达式中</p>
+]]></content>
+      <categories>
+        <category>cpp</category>
+      </categories>
+      <tags>
+        <tag>C++</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>位运算专题</title>
+    <url>/2021/11/12/bit-manipulation/</url>
+    <content><![CDATA[<p>位运算是直接对数的二进制位进行操作，技巧性较强<br>
+本文介绍常见位操作符及技巧，并通过经典基础例题<br>
+最后顺便介绍C++标准库中bitset类</p>
+<span id="more"></span>
+<h2 id="1-常用位操作符及技巧">1 常用位操作符及技巧</h2>
+<h3 id="1-1-位操作符">1.1 位操作符</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">位操作符</th>
+<th style="text-align:center">功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">&amp;（和）</td>
+<td style="text-align:center">同1得1</td>
+</tr>
+<tr>
+<td style="text-align:center">|（或）</td>
+<td style="text-align:center">有1得1</td>
+</tr>
+<tr>
+<td style="text-align:center">^（异或）</td>
+<td style="text-align:center">相同得0，相异得1</td>
+</tr>
+<tr>
+<td style="text-align:center">&gt;&gt;（右移）</td>
+<td style="text-align:center">右移，且高位补0，等价于整除2</td>
+</tr>
+<tr>
+<td style="text-align:center">&lt;&lt;（左移）</td>
+<td style="text-align:center">左移，且低位补0，等价于乘2</td>
+</tr>
+</tbody>
+</table>
+<p><strong>补充</strong>：</p>
+<blockquote>
+<p>右移(&gt;&gt;)：5的二进制为(101)，右移后低位1抹去，高位补零，结果为(010)<br>
+(010)对应十进制数2；故5&gt;&gt;2等价于5/2</p>
+</blockquote>
+<h3 id="1-2-常用技巧">1.2 常用技巧</h3>
+<h4 id="1-2-1-取二进制的第-i-1-位数">1.2.1 取二进制的第(i+1)位数</h4>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//法1：</span>
+<span class="token punctuation">(</span>n<span class="token operator">>></span>i<span class="token punctuation">)</span> <span class="token operator">&amp;</span> <span class="token number">1</span>
+<span class="token comment">//法2：</span>
+n <span class="token operator">&amp;</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token operator">&lt;&lt;</span>i<span class="token punctuation">)</span></code></pre>
+<p>首先，任何数&amp;1，结果为该二进制数最低位的值<br>
+(1010)&amp;1=0, (1011)&amp;1=1<br>
+此处1可以理解为(0001)，在高位补零</p>
+<p>那么，若想获取n的二进制数第i位数：</p>
+<ol>
+<li>可以将第i位数右移到最低位，再&amp;1（对应法1）；</li>
+<li>或将1左移到第i位（对应法2）</li>
+</ol>
+<h4 id="1-2-2-二进制数的赋值">1.2.2 二进制数的赋值</h4>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">x <span class="token operator">|=</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token operator">&lt;&lt;</span>i<span class="token punctuation">)</span></code></pre>
+<p>x一般先初始化为0<br>
+如果想将n的值赋予x，只需找到n(1010)对应值为1的位即可</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">一般通过循环实现
+x<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">0000</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+x <span class="token operator">|=</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token operator">&lt;&lt;</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+此时x<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">1000</span><span class="token punctuation">)</span>；
+
+x <span class="token operator">|=</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token operator">&lt;&lt;</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+x<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">1010</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<h4 id="1-2-3-将最低位1置为0">1.2.3 将最低位1置为0</h4>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">n<span class="token operator">&amp;</span><span class="token punctuation">(</span>n<span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span></code></pre>
+<p>n=(1010), n-1=(1001)<br>
+(1010)&amp;(1001)=(1000);<br>
+n&amp;(n-1)可得到n删去二进制最右侧1的结果</p>
+<blockquote>
+<p>n&amp;(n-1)可加速统计二进制数中1的个数，每统计完最右侧的1，即通过n&amp;(n-1)抹去低位1，避免遍历二进制数</p>
+</blockquote>
+<h4 id="1-2-4-仅保留最低位的1">1.2.4 仅保留最低位的1</h4>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">n<span class="token operator">&amp;</span><span class="token punctuation">(</span><span class="token operator">-</span>n<span class="token punctuation">)</span></code></pre>
+<blockquote>
+<p>二进制中的相反数：<br>
+将n所有二进制位取反，再将结果+1，即得到-n</p>
+</blockquote>
+<p>示例：n=(1010), -n=(0110)<br>
+(1010)&amp;(0110)=(0010)<br>
+结果仅保留最低位1，其余为均置0</p>
+<h4 id="1-2-5-异或和">1.2.5 异或和</h4>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">x <span class="token operator">^=</span> num<span class="token punctuation">[</span>i<span class="token punctuation">]</span></code></pre>
+<p>一般x初始化为0，因为0^x=x<br>
+由于两相同数进行异或的结果为0，即x xor x=0<br>
+故异或常用于找不同</p>
+<blockquote>
+<p><a href="https://leetcode-cn.com/problems/hamming-distance/">leetcode简单-汉明距离</a><br>
+两个整数之间的 汉明距离 指的是这两个数字对应二进制位不同的位置的数目。<br>
+给你两个整数 x 和 y，计算并返回它们之间的汉明距离。</p>
+<blockquote>
+<p>示例：<br>
+输入：x = 1, y = 4<br>
+输出：2<br>
+解释：<br>
+1   (0 0 0 1)<br>
+4   (0 1 0 0)<br>
+1和4的二进制数存在两不同数位</p>
+</blockquote>
+</blockquote>
+<p>思路：显然借助异或和性质，异或后仅相异位会被置1<br>
+问题转化为：求解异或和的计算结果中1的个数<br>
+为统计二进制中1的个数，朴素的想法是遍历所有位<br>
+但考虑到上文提到的n&amp;(n-1)可抹去最低位的1<br>
+我们可以令 n=n&amp;(n-1), 每次抹去最低位的1，并递增计数器ans表示被抹去1的个数，直到n=0即可</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">int</span> s<span class="token operator">=</span>x<span class="token operator">^</span>y<span class="token punctuation">;</span> <span class="token comment">//异或后，仅不同值的位置处为1</span>
+<span class="token keyword">while</span> <span class="token punctuation">(</span>s<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    s <span class="token operator">=</span> <span class="token punctuation">(</span>s<span class="token operator">&amp;</span><span class="token punctuation">(</span>s<span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    ans<span class="token operator">++</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<blockquote>
+<p>注：有个省事的函数**__builtin_popcount(i)**, 可直接计算一个32位无符号整数有多少个位为1)</p>
+</blockquote>
+<h2 id="2-基础经典题型">2 基础经典题型</h2>
+<h3 id="2-1-找数组中特殊的数">2.1 找数组中特殊的数</h3>
+<blockquote>
+<p><a href="https://leetcode-cn.com/problems/single-number/">leetcode简单-只出现一次的数字</a><br>
+给定一个非空整数数组，除了某个元素只出现一次以外，其余每个元素均出现两次。找出那个只出现了一次的元素。</p>
+<blockquote>
+<p>示例：<br>
+输入: [2,2,1]<br>
+输出: 1</p>
+</blockquote>
+</blockquote>
+<p>解析：找不同多考虑异或，因为相同数异或得到0</p>
+<blockquote>
+<p>关键：<br>
+x xor x=0<br>
+x xor 0=x</p>
+</blockquote>
+<p>对本题中数组所有元素进行异或求和，出现两次的元素异或后会被抵消，最终只保留仅出现一次的元素。</p>
+<h3 id="2-2-用二进制数0、1表示状态">2.2 用二进制数0、1表示状态</h3>
+<p>二进制仅包含0、1，可用于表示状态，如元素是否被选取(1表示被选取，0表示未被选取)<br>
+例如对于数组nums={1,2,3,4},可以用(0101)表示选取元素2和4</p>
+<blockquote>
+<p><a href="https://leetcode-cn.com/problems/subsets/">leetcode中等-子集</a><br>
+给你一个整数数组nums，数组中的元素互不相同。返回该数组所有可能的子集（幂集）。<br>
+解集不能包含重复的子集。你可以按任意顺序返回解集。<br>
+用二进制序列表示数值状态，并一一对应取出:</p>
+<blockquote>
+<p>示例：<br>
+输入：nums = [1,2,3]<br>
+输出：[[],[1],[2],[1,2],[3],[1,3],[2,3],[1,2,3]]</p>
+</blockquote>
+</blockquote>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//核心部分</span>
+<span class="token comment">//长度为n的数组，需要长度为n的二进制码来表示每一位是否被选中</span>
+<span class="token comment">//长度为n的二进制码，对应十进制整数 1&lt;&lt;n</span>
+vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> curStep<span class="token punctuation">;</span>
+<span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span> i<span class="token operator">&lt;</span> <span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">&lt;&lt;</span> n<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token operator">++</span>i<span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+    curStep<span class="token punctuation">.</span><span class="token function">clear</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> j<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span> j<span class="token operator">&lt;</span>n<span class="token punctuation">;</span> <span class="token operator">++</span>j<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>i <span class="token operator">&amp;</span> <span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">&lt;&lt;</span> j<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">// i用于枚举，每次迭代仅选取i的二进制对应位为1的元素</span>
+        <span class="token comment">// j用于遍历元素每一位，判断是否为1</span>
+            curStep<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>nums<span class="token punctuation">[</span>j<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+    ans<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>curStep<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>补充解释：<br>
+例如nums={0,1,2,3,4,5}, 迭代到i=5=(000101)<br>
+此时j从0到5依次检查：i的二进制对应位是否为1<br>
+发现第1和第3位值为1，故此步迭代选出元素(0,2)</p>
+<blockquote>
+<p>注意二进制低位在右侧，而nums从左侧开计数</p>
+</blockquote>
+<h3 id="2-3-转化思想：建立映射关系">2.3 转化思想：建立映射关系</h3>
+<p>上文提到可用二进制表示元素选取状态，显然元素不限于数字<br>
+我们通过建立映射，尝试将位运算拓展至字符串</p>
+<blockquote>
+<p><a href="https://leetcode-cn.com/problems/maximum-product-of-word-lengths/">leetcode中等-最大单词长度乘积</a><br>
+给定一个字符串数组words，找到length(word[i]) * length(word[j])的最大值，并且这两个单词不含有公共字母。你可以认为每个单词只包含小写字母。如果不存在这样的两个单词，返回0。</p>
+<blockquote>
+<p>输入: [“abcw”,“baz”,“foo”,“bar”,“xtfn”,“abcdef”]<br>
+输出: 16<br>
+解释: 这两个单词为&quot;abcw&quot;, “xtfn”。</p>
+</blockquote>
+</blockquote>
+<p>思路：<br>
+可以令’a’=0，后续字母以’a’为偏移中心依次增加，char(‘b’)-‘a’=1, char(‘c’)-‘a’=2…<br>
+如此，实现了char与int的对应关系</p>
+<p>接着，考虑到共26个字母，因此使用26位二进制数即可表示相应字母是否被选中<br>
+如字符串&quot;ab&quot;, 对应二进制编码为(000…011)</p>
+<p>最后，发现本题要求不能包含公共字母，转化为二进制数不能在同一位出现1，即a&amp;b=0</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//核心思想</span>
+<span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span> i<span class="token operator">&lt;</span>wordNums<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    states<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span><span class="token punctuation">(</span><span class="token keyword">int</span> j<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span> j<span class="token operator">&lt;</span>words<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> j<span class="token operator">++</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+        <span class="token comment">//此处，将字母对应位置为1</span>
+        <span class="token comment">//例如，'b'将第二位置1，'z'将第26位置1</span>
+        <span class="token comment">//对应位=1，表示该字母被选中</span>
+        states<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">|=</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token operator">&lt;&lt;</span><span class="token punctuation">(</span>words<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">[</span>j<span class="token punctuation">]</span> <span class="token operator">-</span> <span class="token string">'a'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// 借助&amp;判断没有共同字母</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>states<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">&amp;</span> states<span class="token punctuation">[</span>j<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">&#125;</span></code></pre>
+<h2 id="3-std-bitset">3 std::bitset</h2>
+<h3 id="附录函数">附录函数</h3>
+<blockquote>
+<p>__builtin_popcount(i)：计算一个32位无符号整数有多少个位为1</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>algorithm</category>
+      </categories>
+      <tags>
+        <tag>算法</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>心理学与伪心理学</title>
+    <url>/2021/11/07/psychology1/</url>
+    <content><![CDATA[<p>这是我画的一个饼:)，放假有空再补充</p>
+<span id="more"></span>
+]]></content>
+      <categories>
+        <category>随笔</category>
+      </categories>
+      <tags>
+        <tag>心理学</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>对象移动与赋值</title>
+    <url>/2021/11/07/cpp/assignmentAndMove/</url>
+    <content><![CDATA[<p>主要内容：</p>
+<ol>
+<li>右值与对象移动(很amazing)</li>
+<li>拷贝并交换技术</li>
+</ol>
+<span id="more"></span>
+<h2 id="右值">右值</h2>
+<p>右值、纯右值、将亡值</p>
+<h2 id="对象移动">对象移动</h2>
+<h2 id="赋值运算符">赋值运算符</h2>
+<h3 id="正确处理自赋值">正确处理自赋值</h3>
+<h3 id="拷贝并交换技术">拷贝并交换技术</h3>
+]]></content>
+      <categories>
+        <category>cpp</category>
+      </categories>
+      <tags>
+        <tag>C++</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>CUDA-流总结</title>
+    <url>/2021/11/07/cuda/streams/</url>
+    <content><![CDATA[<p>本文简单介绍CUDA背景知识，并通过GPU运行Hello World</p>
+<span id="more"></span>
+<h1>1 为什么要使用流</h1>
+<h1>2 基础知识</h1>
+<ul>
+<li>
+<p>流的定义：CUDA的所有操作均位于一个流中，可将流视为一条流水线，cuda指令视为流水线上的工作</p>
+</li>
+<li>
+<p>同步与异步（重点，且容易出bug）<br>
+同步：阻塞主机端线程，直到完成<br>
+异步：被调用后，控制权立即返回主机端，无需等待完成</p>
+<blockquote>
+<p>cudaMemcpy为同步，cudaMemcpyAsync为异步</p>
+</blockquote>
+</li>
+<li>
+<p>空流与非空流<br>
+空流：也是默认流，无需显式声明；没有ID不利于管理<br>
+非空流：通过cudaStreamCreate显式声明</p>
+<blockquote>
+<p>空流是同步流，非空流是异步流</p>
+</blockquote>
+</li>
+<li>
+<p>阻塞与非阻塞</p>
+</li>
+</ul>
+<pre class="language-c" data-language="c"><code class="language-c">kernal_1<span class="token operator">&lt;&lt;</span><span class="token operator">&lt;</span>grid<span class="token punctuation">,</span> block<span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">,</span> stream<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">>></span><span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+kernal_2<span class="token operator">&lt;&lt;</span><span class="token operator">&lt;</span>grid<span class="token punctuation">,</span> block<span class="token operator">>></span><span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+kernal_3<span class="token operator">&lt;&lt;</span><span class="token operator">&lt;</span>grid<span class="token punctuation">,</span> block<span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">,</span>stream<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">>></span><span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>阻塞流中的操作会被阻塞</p>
+<h1>3 流的使用</h1>
+<ol>
+<li>声明流</li>
+<li>分配空间</li>
+<li>分配任务</li>
+</ol>
+]]></content>
+      <categories>
+        <category>HPC</category>
+      </categories>
+      <tags>
+        <tag>高性能计算</tag>
+        <tag>CUDA</tag>
+      </tags>
+  </entry>
+</search>

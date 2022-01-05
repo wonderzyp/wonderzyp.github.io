@@ -322,7 +322,7 @@ AuthorizedKeysFile <span class="token operator">.</span>ssh<span class="token op
 PasswordAuthentication yes 需要密码认证
 PermitEmptyPasswords yes 不允许空密码</code></pre>
 <ol start="2">
-<li>esc, :x, 完成配置。注意x小写，大写的X是加密文件:smile:</li>
+<li>esc, :x, 完成配置。注意x小写，大写的X是加密文件😄</li>
 <li>重新启动ssh、sshd</li>
 </ol>
 <pre class="language-bash" data-language="bash"><code class="language-bash">server <span class="token function">ssh</span> restart
@@ -331,7 +331,7 @@ server sshd restart</code></pre>
 <p>以下操作<strong>两台电脑</strong>都需要依次执行：</p>
 <ol>
 <li>添加相同用户：adduser mpi，su mpi切换至mpi用户</li>
-<li>运行ssh-keygen -t rsa，在~/.ssh目录下出现后缀名为.pub的文件，将其复制到另一台电脑的~/.ssh目录下，注意文件名称需与sshd_config中设置一致</li>
+<li>运行ssh-keygen -t rsa，在<sub>/.ssh目录下出现后缀名为.pub的文件，将其复制到另一台电脑的</sub>/.ssh目录下，注意文件名称需与sshd_config中设置一致</li>
 <li>运行ifconfig，查看每台的电脑IP<br>
 <img data-src="/pic/mpi1.png" alt="1"></li>
 <li>运行vim /etc/hosts，给IP地址赋别名<br>
@@ -340,7 +340,7 @@ server sshd restart</code></pre>
 <li>在IP地址为node1的电脑上，运行ssh node2尝试连接node2；反之亦然</li>
 </ol>
 <blockquote>
-<p>补充：建议passwd -d mpi将mpi用户的密码删除(如果后续连接不上的话:smile:)</p>
+<p>补充：建议passwd -d mpi将mpi用户的密码删除(如果后续连接不上的话😄)</p>
 </blockquote>
 <h2 id="2-设置NFS挂载文件">2 设置NFS挂载文件</h2>
 <p>两台电脑需区分服务器端和客户端，在服务器端创建共享文件夹，将需要共享的文件放于此文件夹内</p>
@@ -416,8 +416,8 @@ server sshd restart</code></pre>
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/2022/01/02/notice/" rel="next" title="博客持续建设中...">
-                  博客持续建设中... <i class="fa fa-chevron-right"></i>
+                <a href="/2022/01/02/notice/" rel="next" title="博客建设日志">
+                  博客建设日志 <i class="fa fa-chevron-right"></i>
                 </a>
             </div>
           </div>

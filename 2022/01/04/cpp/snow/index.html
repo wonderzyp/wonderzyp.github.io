@@ -24,15 +24,15 @@
 <meta name="description" content="程序并行化需针对不同的硬件平台编写特定的代码，极大增加了编程工作量。 针对并行计算移植性差的这一痛点，VTK-m框架提供解决方案，实现了一份代码多平台通用。 本文基于VTKm框架实现雪花分型案例：">
 <meta property="og:type" content="article">
 <meta property="og:title" content="VTKm实现雪花分型案例">
-<meta property="og:url" content="https://wonderzyp.cn/2022/01/03/cpp/snow/index.html">
+<meta property="og:url" content="https://wonderzyp.cn/2022/01/04/cpp/snow/index.html">
 <meta property="og:site_name" content="公子平的小站">
 <meta property="og:description" content="程序并行化需针对不同的硬件平台编写特定的代码，极大增加了编程工作量。 针对并行计算移植性差的这一痛点，VTK-m框架提供解决方案，实现了一份代码多平台通用。 本文基于VTKm框架实现雪花分型案例：">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://wonderzyp.cn/pic/snowexam.png">
 <meta property="og:image" content="https://wonderzyp.cn/pic/snowiter1.png">
 <meta property="og:image" content="https://wonderzyp.cn/pic/snowiter2.png">
-<meta property="article:published_time" content="2022-01-03T08:04:05.000Z">
-<meta property="article:modified_time" content="2022-01-03T08:42:42.139Z">
+<meta property="article:published_time" content="2022-01-04T08:04:05.000Z">
+<meta property="article:modified_time" content="2022-01-12T02:01:10.642Z">
 <meta property="article:author" content="公子平">
 <meta property="article:tag" content="高性能计算">
 <meta property="article:tag" content="C++">
@@ -41,11 +41,11 @@
 <meta name="twitter:image" content="https://wonderzyp.cn/pic/snowexam.png">
 
 
-<link rel="canonical" href="https://wonderzyp.cn/2022/01/03/cpp/snow/">
+<link rel="canonical" href="https://wonderzyp.cn/2022/01/04/cpp/snow/">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://wonderzyp.cn/2022/01/03/cpp/snow/","path":"2022/01/03/cpp/snow/","title":"VTKm实现雪花分型案例"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://wonderzyp.cn/2022/01/04/cpp/snow/","path":"2022/01/04/cpp/snow/","title":"VTKm实现雪花分型案例"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
 <title>VTKm实现雪花分型案例 | 公子平的小站</title>
@@ -80,7 +80,7 @@
       <p class="site-title">公子平的小站</p>
       <i class="logo-line"></i>
     </a>
-      <p class="site-subtitle" itemprop="description">高性能计算、C++、随笔</p>
+      <p class="site-subtitle" itemprop="description">C++、高性能计算、随笔</p>
   </div>
 
   <div class="site-nav-right">
@@ -96,9 +96,9 @@
   <ul class="main-menu menu">
         <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
         <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
-        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
-        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
-        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+        <li class="menu-item menu-item-category"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Category</a></li>
+        <li class="menu-item menu-item-tag"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tag</a></li>
+        <li class="menu-item menu-item-archive"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archive</a></li>
       <li class="menu-item menu-item-search">
         <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
         </a>
@@ -170,7 +170,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">15</span>
+          <span class="site-state-item-count">17</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -181,17 +181,20 @@
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-count">11</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
 </div>
   <div class="links-of-author site-overview-item animated">
       <span class="links-of-author-item">
-        <a href="https://github.com/wonderzyp" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wonderzyp" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+        <a href="https://github.com/wonderzyp" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wonderzyp" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
       </span>
       <span class="links-of-author-item">
-        <a href="mailto:2671078523@qq.com" title="E-Mail → mailto:2671078523@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+        <a href="mailto:2671078523@qq.com" title="E-Mail → mailto:2671078523@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/ping-ge-48" title="Zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;ping-ge-48" rel="noopener" target="_blank"><i class="fab fa-zhihu fa-fw"></i></a>
       </span>
   </div>
   <div class="cc-license site-overview-item animated" itemprop="license">
@@ -231,7 +234,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://wonderzyp.cn/2022/01/03/cpp/snow/">
+    <link itemprop="mainEntityOfPage" href="https://wonderzyp.cn/2022/01/04/cpp/snow/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -254,10 +257,16 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">Posted on</span>
-      
 
-      <time title="Created: 2022-01-03 16:04:05 / Modified: 16:42:42" itemprop="dateCreated datePublished" datetime="2022-01-03T16:04:05+08:00">2022-01-03</time>
+      <time title="Created: 2022-01-04 16:04:05" itemprop="dateCreated datePublished" datetime="2022-01-04T16:04:05+08:00">2022-01-04</time>
     </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2022-01-12 10:01:10" itemprop="dateModified" datetime="2022-01-12T10:01:10+08:00">2022-01-12</time>
+      </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
         <i class="far fa-folder"></i>
@@ -611,12 +620,49 @@ ContObject内部元素是二维点，两点构成一条直线，因此ExecObject
   </li>
   <li class="post-copyright-link">
       <strong>Post link: </strong>
-      <a href="https://wonderzyp.cn/2022/01/03/cpp/snow/" title="VTKm实现雪花分型案例">https://wonderzyp.cn/2022/01/03/cpp/snow/</a>
+      <a href="https://wonderzyp.cn/2022/01/04/cpp/snow/" title="VTKm实现雪花分型案例">https://wonderzyp.cn/2022/01/04/cpp/snow/</a>
   </li>
   <li class="post-copyright-license">
     <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
   </li>
 </ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎交流写bug心得</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://github.com/wonderzyp">
+          <span class="icon">
+            <i class="fab fa-github"></i>
+          </span>
+
+          <span class="label">GitHub</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="mailto:2671078523@qq.com">
+          <span class="icon">
+            <i class="fa fa-envelope"></i>
+          </span>
+
+          <span class="label">E-Mail</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://www.zhihu.com/people/ping-ge-48">
+          <span class="icon">
+            <i class="fab fa-zhihu"></i>
+          </span>
+
+          <span class="label">Zhihu</span>
+        </a>
+      </div>
+  </div>
 </div>
 
           <div class="post-tags">
@@ -629,11 +675,14 @@ ContObject内部元素是二维点，两点构成一条直线，因此ExecObject
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/2022/01/03/cpp/structured-binding/" rel="prev" title="C++17——结构化绑定">
-                  <i class="fa fa-chevron-left"></i> C++17——结构化绑定
+                <a href="/2022/01/03/cpp/crtp/" rel="prev" title="聊聊CRTP(奇异递归模板模式)">
+                  <i class="fa fa-chevron-left"></i> 聊聊CRTP(奇异递归模板模式)
                 </a>
             </div>
             <div class="post-nav-item">
+                <a href="/2022/01/11/cpp/assignmentAndMove/" rel="next" title="聊聊移动语义和万能引用T&&">
+                  聊聊移动语义和万能引用T&& <i class="fa fa-chevron-right"></i>
+                </a>
             </div>
           </div>
     </footer>
@@ -651,6 +700,8 @@ ContObject内部元素是二维点，两点构成一条直线，因此ExecObject
   <footer class="footer">
     <div class="footer-inner">
 
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">皖ICP备2022000467号 </a>
+  </div>
 
 <div class="copyright">
   &copy; 2021 – 

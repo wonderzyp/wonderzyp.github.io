@@ -1,24 +1,275 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>博客建设日志</title>
-    <url>/2022/01/02/notice/</url>
+    <title>【置顶】 博客建设日志</title>
+    <url>/2021/11/28/notice/</url>
     <content><![CDATA[<ul>
+<li>2022-1-5 为轻松地通过备案，移除留言功能</li>
 <li>2022-1-3 更换markdown渲染，现支持emoji 😆</li>
-<li>2022-1-3 移除鸡肋的聊天室功能；移除Vercel(因为间歇性404 😃)</li>
-<li>2022-1-1 添加聊天室功能，使用Vercel加速网页</li>
+<li>2022-1-3 移除聊天室功能；移除Vercel(因为间歇性404)</li>
 </ul>
 <span id="more"></span>
+<h2 id="现存问题">现存问题</h2>
+<ol>
+<li>移动端不显示文章目录</li>
+<li>移动端不显示sideBar</li>
+<li>加载速度太慢了(挂在github上所导致的)</li>
+</ol>
+<h2 id="历史更新">历史更新</h2>
 <ul>
 <li>2022-1-2 添加本地搜索功能</li>
+<li>2022-1-1 添加聊天室功能，使用Vercel加速网页</li>
 <li>2021-12-3 添加置顶功能</li>
 <li>2021-11-28 添加评论功能</li>
+<li>2021-11-03 <a href="http://xn--wonderzyp-u46n570ckzkqw8o.cn">购买域名wonderzyp.cn</a>（好奇的zyp）</li>
 </ul>
 ]]></content>
   </entry>
   <entry>
+    <title>聊聊移动语义和万能引用T&amp;&amp;</title>
+    <url>/2022/01/11/cpp/assignmentAndMove/</url>
+    <content><![CDATA[<p>主要内容：</p>
+<ol>
+<li>右值与移动语义</li>
+<li>万能引用和引用折叠</li>
+<li>std::move, std::forward源码解析</li>
+</ol>
+<span id="more"></span>
+<p><strong>写在前面：</strong><br>
+本文将移动、右值、万能引用和完美转发尽可能简洁地阐述出来，可作为入门参考。<br>
+文章最后提供了进一步学习的参考资料。（C++真的是太令人痛苦了😄）</p>
+<h1>右值与移动语义</h1>
+<p>传统C++实现移动需要两步：<strong>先复制</strong>一份副本，<strong>再析构</strong>原始数据。<br>
+例如：想将一本书从学校移动到家中，传统C++解决思路是先买同一本相同的放在家中(复制)，再将学校的那本书扔了(销毁)，显然是非常浪费的。</p>
+<p>为提高效率，C++11引入<strong>移动</strong>操作，避免先复制再析构的解决方案。</p>
+<h2 id="移动">移动</h2>
+<p>以下面代码为例：</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> <span class="token function">foo</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+  std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> temp<span class="token operator">=</span><span class="token punctuation">&#123;</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> temp<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> v<span class="token operator">=</span><span class="token function">foo</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>按传统理解，foo()函数内部创建一个临时值temp并返回给v；<br>
+v在获取该临时值时，先复制一份副本，再将原始temp销毁，显然存在一个“复制-析构”的过程。<br>
+如果临时值temp相当大，则会产生大量开销影响性能。<br>
+所幸在C++11之后，编辑器将左值temp隐式右值转换，相当于<code>static_cast&lt;vector&lt;int&gt;&amp;&amp;&gt;(temp)</code>，并调用<strong>移动</strong>语义，避免“复制-析构”降低性能。</p>
+<p>此外需注意，变量“移动”后，原先指针已变为nullptr，无法被再次访问：</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  std<span class="token double-colon punctuation">::</span>string str <span class="token operator">=</span> <span class="token string">"zyp is handsome"</span><span class="token punctuation">;</span>
+  std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span>std<span class="token double-colon punctuation">::</span>string<span class="token operator">></span> vec<span class="token punctuation">;</span>
+  vec<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>str<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  std<span class="token double-colon punctuation">::</span>cout<span class="token operator">&lt;&lt;</span><span class="token string">"str= "</span><span class="token operator">&lt;&lt;</span>str<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+  std<span class="token double-colon punctuation">::</span>cout<span class="token operator">&lt;&lt;</span><span class="token string">"using std::move"</span><span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+
+  vec<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>str<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  std<span class="token double-colon punctuation">::</span>cout<span class="token operator">&lt;&lt;</span><span class="token string">"str= "</span><span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span> <span class="token comment">//原始str处的值变为空</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>输出为:</p>
+<pre class="language-none"><code class="language-none">str&#x3D; zyp is handsome
+using std::move
+str&#x3D; </code></pre>
+<blockquote>
+<p>移动通过避免“复制-析构”过程，减少开销并提升性能</p>
+</blockquote>
+<p>接下来介绍右值引用，在C++中正是通过右值引用将移动和复制操作区分开。</p>
+<h2 id="右值">右值</h2>
+<p>本章简单介绍左值和右值，以及右值在移动中的应用。(将亡值、纯右值可自行参考文末的参考资料)</p>
+<ul>
+<li>左值(lvalue)：可以被取地址的值，一般持续存在</li>
+<li>右值(rvalue)：表达式结束后不再存在</li>
+</ul>
+<blockquote>
+<p>例如：<code>int x=10</code>，x是左值；<code>20, 1+2</code>等表达式结束后即消失的值称为右值。(右值没有在内存中开辟空间进行保存)</p>
+</blockquote>
+<p><strong>右值引用</strong>：<code>T &amp;&amp;</code>，可拿到一个将亡值，使临时值的生命周期得以延长，区分移动和复制操作。</p>
+<p>下面以<code>vector</code>的<code>push_back</code>大致介绍右值引用在移动中的应用：</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">void</span> <span class="token function">push_back</span><span class="token punctuation">(</span><span class="token keyword">const</span> value_type<span class="token operator">&amp;</span> value<span class="token punctuation">)</span><span class="token punctuation">&#123;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token keyword">void</span> <span class="token function">push_back</span><span class="token punctuation">(</span>value_type<span class="token operator">&amp;&amp;</span> value<span class="token punctuation">)</span><span class="token punctuation">&#123;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<p><code>push_back</code>通过重载函数为左值和右值分别提供一个独特版本的函数，如此可通过传入参数的类型将复制和移动操作分开：左值调用复制版本，右值调用移动版本。</p>
+<p>但是，<strong><code>&amp;&amp;</code>并不总是等价于右值引用</strong>。（是的，C++从不让人开心😄）欲理解这一点，需先了解<strong>万能引用</strong>的概念。</p>
+<h1>万能引用 T&amp;&amp;</h1>
+<p>在C++中，<code>&amp;&amp;</code>有时表示左值引用，有时表示右值引用。这同时也意味着：在<strong>特定情况</strong>下，<strong><code>&amp;&amp;</code>既能绑定左值，又能绑定右值</strong><br>
+正是这种灵活性，称<code>&amp;&amp;</code>为万能引用。<br>
+那么在什么情况下，<code>&amp;&amp;</code>可被视为万能引用呢？</p>
+<blockquote>
+<p>当一个变量或参数被声明为<code>T&amp;&amp;</code>时，其中T为待<strong>推导</strong>类型，那么该变量或参数称为万能引用。（常见应用场景为<strong>模板函数</strong>或auto表达式）</p>
+</blockquote>
+<p>万能引用依据初始化<strong>值类别</strong>不同，推到为不同的值类别，其推导规则如下：</p>
+<ul>
+<li>用左值初始化universal reference，则universal reference变成lvalue reference</li>
+<li>用右值初始化universal reference，则universal reference变为rvalue reference</li>
+</ul>
+<p>这里介绍以下 <strong>值类别(value category)</strong> 和 <strong>值类型(value type)</strong> 的区别：</p>
+<ul>
+<li>值类别：左值、右值一类的概念</li>
+<li>值类型：int, double等</li>
+</ul>
+<p>注意：值类别和值类型<strong>互不相干</strong>，这个规则最迷惑的就是<strong>右值引用本身是个左值</strong>。<br>
+以下面代码为例：</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">void</span> <span class="token function">fun</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token operator">&amp;&amp;</span> arg<span class="token punctuation">)</span><span class="token punctuation">&#123;</span>cout<span class="token operator">&lt;&lt;</span><span class="token string">"rvaule reference"</span><span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span><span class="token punctuation">&#125;</span>
+<span class="token keyword">void</span> <span class="token function">fun</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token operator">&amp;</span> arg<span class="token punctuation">)</span><span class="token punctuation">&#123;</span>cout<span class="token operator">&lt;&lt;</span><span class="token string">"lvalue reference"</span><span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span><span class="token punctuation">&#125;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  <span class="token keyword">int</span><span class="token operator">&amp;&amp;</span> a<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">;</span>
+  <span class="token function">fun</span><span class="token punctuation">(</span>a<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//output: lvalue reference</span>
+  <span class="token function">fun</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//output: rvalue reference</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>代码中a的value type是int&amp;&amp;，即右值引用，但其调用重载函数的<code>fun(int&amp; arg)</code>版本，可见其value category是左值<br>
+因此，值类别和值类型直接不存在必然联系。</p>
+<p>另外需注意，仅当需要<strong>推导</strong>的情境下才能激活万能引用，类型已经明确的情况下无效：</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">int</span><span class="token operator">&amp;&amp;</span> a<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span><span class="token operator">&amp;&amp;</span> b<span class="token operator">=</span>a<span class="token punctuation">;</span> <span class="token comment">//错误，未激活万能引用，不能将左值和右值引用绑定</span>
+<span class="token comment">// int&amp;&amp; b=std::move(a); 正确，右值绑定至右值引用</span>
+<span class="token keyword">auto</span><span class="token operator">&amp;&amp;</span> c<span class="token operator">=</span>a<span class="token punctuation">;</span><span class="token comment">// 激活万能引用，a是左值，此处auto&amp;&amp;推导为int&amp;</span></code></pre>
+<blockquote>
+<p>总结：万能引用仅在推导情况下被激活，依据实际实例化参数的不同，既能推导为左值引用，又能推导为右值引用。</p>
+</blockquote>
+<p>那么，万能引用是如何依据实例化参数进行推导的呢？<br>
+这涉及到C++的一个规定：引用折叠。</p>
+<h2 id="引用折叠">引用折叠</h2>
+<p>从一个简单案例开始：</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">void</span> <span class="token function">fun</span><span class="token punctuation">(</span>T<span class="token operator">&amp;&amp;</span> arg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> x<span class="token operator">=</span><span class="token number">11</span><span class="token punctuation">;</span> <span class="token comment">//x为左值</span>
+<span class="token function">fun</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//调用右值版本</span>
+<span class="token function">fun</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//调用左值版本</span></code></pre>
+<p><code>fun(10)</code>和<code>fun(x)</code>分别调用以下实例：</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">void</span> <span class="token function">fun</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token operator">&amp;</span> arg<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//左值版本</span>
+<span class="token keyword">void</span> <span class="token function">fun</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token operator">&amp;&amp;</span> arg<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//右值版本</span></code></pre>
+<p>实际上，<code>fun(x)</code>调用模板函数时，有一个中间产物<code>void fun(int &amp; &amp;&amp;arg)</code>；<br>
+但由于C++语法<strong>不允许指向引用的引用(reference to reference)</strong>，为解决上述的中间产物，C++规定了<strong>引用折叠法则</strong>：</p>
+<ul>
+<li><strong>rvalue reference to an rvalue reference</strong> 折叠为 <strong>rvalue reference</strong></li>
+<li>其余情况折叠为<strong>lvalue reference</strong></li>
+</ul>
+<p>依据该法则：<br>
+<code>void fun(int&amp; &amp;&amp;arg)</code>折叠为<code>void fun(int&amp; arg)</code><br>
+<code>void fun(int&amp;&amp; &amp;&amp;arg)</code>折叠为<code>void fun(int&amp;&amp; arg</code><br>
+这也就解释了<code>fun(10)</code>和<code>fun(x)</code>调用不同版本的实现过程</p>
+<p>再看下面一个案例:</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//fun()函数在模板函数pass中调用</span>
+<span class="token keyword">void</span> <span class="token function">fun</span><span class="token punctuation">(</span> <span class="token keyword">int</span> <span class="token keyword">const</span> <span class="token operator">&amp;</span>arg <span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> std<span class="token double-colon punctuation">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"lvalue\n"</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+<span class="token keyword">void</span> <span class="token function">fun</span><span class="token punctuation">(</span> <span class="token keyword">int</span> <span class="token operator">&amp;&amp;</span> arg <span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> std<span class="token double-colon punctuation">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"rvalue\n"</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+<span class="token keyword">template</span><span class="token operator">&lt;</span> <span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">void</span> <span class="token function">pass</span><span class="token punctuation">(</span>T<span class="token operator">&amp;&amp;</span> arg<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  std<span class="token double-colon punctuation">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"using std::forward: "</span><span class="token punctuation">;</span>
+  <span class="token function">fun</span><span class="token punctuation">(</span> std<span class="token double-colon punctuation">::</span><span class="token generic-function"><span class="token function">forward</span><span class="token generic class-name"><span class="token operator">&lt;</span>T<span class="token operator">></span></span></span><span class="token punctuation">(</span>arg<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  std<span class="token double-colon punctuation">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"using std::move: "</span><span class="token punctuation">;</span>
+  <span class="token function">fun</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>arg<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  std<span class="token double-colon punctuation">::</span>cout<span class="token operator">&lt;&lt;</span><span class="token string">"using simple passing: "</span><span class="token punctuation">;</span>
+  <span class="token function">fun</span><span class="token punctuation">(</span>arg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  std<span class="token double-colon punctuation">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"using rvalue 5:\n"</span><span class="token punctuation">;</span>
+  <span class="token function">pass</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//传递右值</span>
+  cout<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+  std<span class="token double-colon punctuation">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"using lvalue x=5:\n"</span><span class="token punctuation">;</span>
+  <span class="token keyword">int</span> x<span class="token operator">=</span><span class="token number">5</span><span class="token punctuation">;</span> <span class="token comment">//传递左值</span>
+  <span class="token function">pass</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>这里以<code>pass(5)</code>为例，解释程序运行过程：</p>
+<ol>
+<li>5为右值，调用模板函数实例<code>void pass(int&amp;&amp; &amp;&amp;arg)</code></li>
+<li>由于引用折叠，实际为<code>void pass(int&amp;&amp; arg)</code></li>
+<li>在<code>pass(int&amp;&amp; arg)</code>中，arg是右值引用，但它是个<strong>左值</strong></li>
+<li>std::forward可保留值的原有属性，<code>int&amp;&amp;</code>即调用<code>fun(int&amp;&amp; arg)</code>版本</li>
+<li>std::move强制转化为右值，一定调用<code>fun(int&amp;&amp; arg)</code></li>
+<li>简单传值<code>fun(arg)</code>，由于arg是左值，调用<code>fun(int const &amp;arg)</code></li>
+</ol>
+<p>程序运行结果为：</p>
+<pre class="language-none"><code class="language-none">&#x2F;&#x2F;VScode -std&#x3D;c++17
+
+using rvalue 5:
+using std::forward: rvalue
+using std::move: rvalue
+using simple passing: lvalue
+
+using lvalue x&#x3D;5:
+using std::forward: lvalue
+using std::move: rvalue
+using simple passing: lvalue</code></pre>
+<p>这里显然有一个问题：对于<code>pass(5)</code>而言，明明刚开始传入的值是右值5，但最后间接调用fun函数的左值版本<code>fun(int const&amp; arg)</code><br>
+参数类型在传递的过程中<strong>发生了变化</strong>，原来是右值，却被无意识地转化为左值。<br>
+为解决这个问题，std::forward登场了 😄</p>
+<h2 id="功能与源码分析">功能与源码分析</h2>
+<ul>
+<li>std::forward：保证多次传递中value category始终不变(右值永远右值，左值永远左值)</li>
+<li>std::move：强制转化为右值</li>
+</ul>
+<p>下面分别介绍两者源码，但首先需了解<code>std::remove_reference</code></p>
+<h3 id="std-remove-reference">std::remove_reference</h3>
+<p>std::remove_reference可去除<code>T</code>的引用部分，仅保留内存部分<br>
+如<code>int&amp;&amp;</code>和<code>int&amp;</code>，均被转化为<code>int</code><br>
+具体实现较简单，借助模板偏特化实现：</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">_Tp</span><span class="token operator">></span>
+<span class="token keyword">struct</span> <span class="token class-name">remove_reference</span>
+<span class="token punctuation">&#123;</span> <span class="token keyword">typedef</span> _Tp   type<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token comment">// 特化版本</span>
+<span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">_Tp</span><span class="token operator">></span>
+<span class="token keyword">struct</span> <span class="token class-name">remove_reference</span><span class="token operator">&lt;</span>_Tp<span class="token operator">&amp;</span><span class="token operator">></span>
+<span class="token punctuation">&#123;</span> <span class="token keyword">typedef</span> _Tp   type<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">_Tp</span><span class="token operator">></span>
+<span class="token keyword">struct</span> <span class="token class-name">remove_reference</span><span class="token operator">&lt;</span>_Tp<span class="token operator">&amp;&amp;</span><span class="token operator">></span>
+<span class="token punctuation">&#123;</span> <span class="token keyword">typedef</span> _Tp   type<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<h3 id="std-move">std::move</h3>
+<p>C++11使用<code>std::move</code>将参数<strong>无条件转化为右值</strong></p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">_Tp</span><span class="token operator">></span>  <span class="token keyword">constexpr</span> <span class="token keyword">typename</span> <span class="token class-name">std</span><span class="token double-colon punctuation">::</span>remove_reference<span class="token operator">&lt;</span>_Tp<span class="token operator">></span><span class="token double-colon punctuation">::</span>type<span class="token operator">&amp;&amp;</span>  <span class="token function">move</span><span class="token punctuation">(</span>_Tp<span class="token operator">&amp;&amp;</span> __t<span class="token punctuation">)</span> <span class="token keyword">noexcept</span>  
+<span class="token punctuation">&#123;</span> 
+  <span class="token keyword">return</span> <span class="token keyword">static_cast</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">std</span><span class="token double-colon punctuation">::</span>remove_reference<span class="token operator">&lt;</span>_Tp<span class="token operator">></span><span class="token double-colon punctuation">::</span>type<span class="token operator">&amp;&amp;</span><span class="token operator">></span><span class="token punctuation">(</span>__t<span class="token punctuation">)</span><span class="token punctuation">;</span> 
+<span class="token punctuation">&#125;</span></code></pre>
+<p>这个就更简单了，看它的返回类型<code>std::remove_reference&lt;_Tp&gt;::type&amp;&amp;</code>是一个右值引用，那么无论<code>__t</code>是<code>_Tp&amp;</code>还是<code>_Tp&amp;&amp;</code>，均通过<code>static_cast</code>返回右值引用</p>
+<h3 id="std-forward">std::forward</h3>
+<p>std::forward保证参数在传递过程中，其value category不会发生变化，这也被称为<strong>完美转发</strong>。<br>
+源码实现如下，需分别处理左值与右值：</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//转发左值</span>
+<span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">_Tp</span><span class="token operator">></span>
+<span class="token keyword">constexpr</span> _Tp<span class="token operator">&amp;&amp;</span>
+<span class="token function">forward</span><span class="token punctuation">(</span><span class="token keyword">typename</span> <span class="token class-name">std</span><span class="token double-colon punctuation">::</span>remove_reference<span class="token operator">&lt;</span>_Tp<span class="token operator">></span><span class="token double-colon punctuation">::</span>type<span class="token operator">&amp;</span> __t<span class="token punctuation">)</span> <span class="token keyword">noexcept</span>
+<span class="token punctuation">&#123;</span> <span class="token keyword">return</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>_Tp<span class="token operator">&amp;&amp;</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>__t<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+<span class="token comment">//转发右值</span>
+<span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">_Tp</span><span class="token operator">></span>
+<span class="token keyword">constexpr</span> _Tp<span class="token operator">&amp;&amp;</span>
+<span class="token function">forward</span><span class="token punctuation">(</span><span class="token keyword">typename</span> <span class="token class-name">std</span><span class="token double-colon punctuation">::</span>remove_reference<span class="token operator">&lt;</span>_Tp<span class="token operator">></span><span class="token double-colon punctuation">::</span>type<span class="token operator">&amp;&amp;</span> __t<span class="token punctuation">)</span> <span class="token keyword">noexcept</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">static_assert</span><span class="token punctuation">(</span><span class="token operator">!</span>std<span class="token double-colon punctuation">::</span>is_lvalue_reference<span class="token operator">&lt;</span>_Tp<span class="token operator">></span><span class="token double-colon punctuation">::</span>value<span class="token punctuation">,</span> <span class="token string">"template argument"</span>
+        <span class="token string">" substituting _Tp is an lvalue reference type"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>_Tp<span class="token operator">&amp;&amp;</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>__t<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<ul>
+<li>若<code>__t</code>为左值，调用第一个模板函数，<code>_Tp&amp;&amp;</code>会推导为<code>_Tp&amp; &amp;&amp;</code>，进而折叠为<code>_Tp&amp;</code>。由此实现接收左值，返回左值引用</li>
+<li>若<code>__t</code>为右值，匹配到第二个模板函数，<code>_Tp&amp;&amp; &amp;&amp;</code>折叠为<code>_Tp&amp;&amp;</code>。实现接收右值，返回右值引用。</li>
+</ul>
+<blockquote>
+<p>总结：<code>std::forward</code>和<code>std::move</code>均借助<code>static_cast</code>实现；<br>
+前者保证value category在参数传递过程中不发生变化，后者实现强制转化为右值类型。</p>
+</blockquote>
+<p><strong>参考资料</strong></p>
+<ol>
+<li><a href="https://zhuanlan.zhihu.com/p/99524127">现代C++之万能引用、完美转发、引用折叠</a></li>
+<li><a href="http://avdancedu.com/a39d51f9/">深入分析移动构造函数及其原理</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/369203981">谈谈完美转发</a></li>
+<li><a href="https://isocpp.org/blog/2012/11/universal-references-in-c11-scott-meyers#NittyGrittyDetails">Universal-references-in-c++11</a></li>
+<li><a href="https://cppinsights.io/">一个C++模板可视化工具</a></li>
+</ol>
+]]></content>
+      <categories>
+        <category>cpp</category>
+      </categories>
+      <tags>
+        <tag>C++</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>VTKm实现雪花分型案例</title>
-    <url>/2022/01/03/cpp/snow/</url>
+    <url>/2022/01/04/cpp/snow/</url>
     <content><![CDATA[<p>程序并行化需针对不同的硬件平台编写特定的代码，极大增加了编程工作量。<br>
 针对并行计算移植性差的这一痛点，VTK-m框架提供解决方案，实现了<strong>一份代码多平台通用。</strong><br>
 本文基于VTKm框架实现雪花分型案例：<br>
@@ -339,6 +590,112 @@ ContObject内部元素是二维点，两点构成一条直线，因此ExecObject
       </tags>
   </entry>
   <entry>
+    <title>聊聊CRTP(奇异递归模板模式)</title>
+    <url>/2022/01/03/cpp/crtp/</url>
+    <content><![CDATA[<p>本文介绍CRTP的两个功能：</p>
+<ol>
+<li>添加函数性(Adding functionality)</li>
+<li>实现静态多态</li>
+</ol>
+<span id="more"></span>
+<h1>CRTP</h1>
+<p>CRTP, Curiously Recurring Template Pattern，亦称奇异递归模板模式(这名字我就没记住过😬)<br>
+主要特征是：<strong>将派生类作为基类的模板参数</strong>。<br>
+通过这种奇怪的做法(很好奇第一个开发出这个套路的人是怎么想到的:) )，<br>
+主要得到了两种功能：Adding functionality与静态多态。</p>
+<h2 id="Adding-functionality">Adding functionality</h2>
+<p>假设B为基类,D为B的派生类；<br>
+借助CRTP可实现：在派生类D中定义某种特定函数时，D同时会自动获取<strong>额外的</strong>新函数功能。</p>
+<p>例如：一般而言，<code>operator++</code>是借助<code>operator+</code>代码复用实现的。<br>
+那么，将<code>operator++</code>放在基类，则所有定义了<code>operator+</code>的派生类，均自动获取<code>operator++</code>的功能，实现了代码简化。</p>
+<p>可见，CRTP的核心是将<strong>共同部分抽象到基类。</strong></p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//1. Adding functionality</span>
+<span class="token comment">//将公共部分抽象到testUseCRTP中</span>
+<span class="token comment">//继承testUseCRTP的子类，只要定义getValue和setValue，即可获得square与setToOpposite方法</span>
+<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">struct</span> <span class="token class-name">testUseCRTP</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">void</span> <span class="token function">square</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+        T<span class="token operator">&amp;</span> underlying<span class="token operator">=</span><span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>T<span class="token operator">&amp;</span><span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        underlying<span class="token punctuation">.</span><span class="token function">setValue</span><span class="token punctuation">(</span>underlying<span class="token punctuation">.</span><span class="token function">getValue</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">*</span>underlying<span class="token punctuation">.</span><span class="token function">getValue</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+    <span class="token keyword">void</span> <span class="token function">setToOpposite</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+        T<span class="token operator">&amp;</span> underlying<span class="token operator">=</span><span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>T<span class="token operator">&amp;</span><span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        underlying<span class="token punctuation">.</span><span class="token function">setValue</span><span class="token punctuation">(</span><span class="token operator">-</span>underlying<span class="token punctuation">.</span><span class="token function">getValue</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">class</span> <span class="token class-name">A</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token class-name">testUseCRTP</span><span class="token operator">&lt;</span><span class="token class-name">A</span><span class="token operator">></span></span>
+<span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token function">A</span><span class="token punctuation">(</span><span class="token keyword">double</span> b<span class="token punctuation">)</span><span class="token punctuation">&#123;</span>value<span class="token operator">=</span>b<span class="token punctuation">;</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+    <span class="token operator">~</span><span class="token function">A</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+    <span class="token keyword">double</span> <span class="token function">getValue</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">&#123;</span><span class="token keyword">return</span> value<span class="token punctuation">;</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+    <span class="token keyword">void</span> <span class="token function">setValue</span><span class="token punctuation">(</span><span class="token keyword">double</span> z<span class="token punctuation">)</span><span class="token punctuation">&#123;</span>value<span class="token operator">=</span>z<span class="token punctuation">;</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token keyword">private</span><span class="token operator">:</span>
+    <span class="token keyword">double</span> value<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    A <span class="token function">a</span><span class="token punctuation">(</span><span class="token number">11</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a<span class="token punctuation">.</span><span class="token function">square</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    std<span class="token double-colon punctuation">::</span>cout<span class="token operator">&lt;&lt;</span>a<span class="token punctuation">.</span><span class="token function">getValue</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">&lt;&lt;</span>std<span class="token double-colon punctuation">::</span>endl<span class="token punctuation">;</span>
+    a<span class="token punctuation">.</span><span class="token function">setToOpposite</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    std<span class="token double-colon punctuation">::</span>cout<span class="token operator">&lt;&lt;</span>a<span class="token punctuation">.</span><span class="token function">getValue</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">&lt;&lt;</span>std<span class="token double-colon punctuation">::</span>endl<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>上述代码中，派生类A定义<code>getValue()</code>和<code>setValue()</code>两方法后，自动获取求平方<code>square()</code>和求相反数<code>setToOpposite()</code>两方法。</p>
+<p>考虑一个问题：为什么使用CRTP，而不是non-member template functions呢？</p>
+<ol>
+<li>CRTP方案使类<strong>直接展示接口</strong></li>
+<li>CRTP可在编译期报错，<strong>保证接口统一</strong>(一定程度上避免单词拼写错误)</li>
+<li>模板函数不能方便定位在哪一个include文件中</li>
+</ol>
+<h2 id="静态多态">静态多态</h2>
+<p>CRTP可使得类具有类似虚函数的功能，但没有虚函数调用时的开销（<strong>虚函数调用时，需通过虚函数指针查找虚函数表进行调用</strong>），但无法动态绑定。</p>
+<blockquote>
+<p>虚函数：每个子类可定义函数将基类虚函数覆盖，实现不同的功能；抽象来看，CRTP也实现了不同子类的相同成员函数的特化，与虚函数得到的结果一致<br>
+虚函数表：编译器对于有虚函数的类，会维护一张虚函数表（虚表），对象前四个字节是指向虚表的指针。</p>
+</blockquote>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//2. Static Interfaces</span>
+<span class="token comment">//CRTP的多态在编译期实现，属于静态多态</span>
+<span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">Child</span><span class="token operator">></span>
+<span class="token keyword">struct</span> <span class="token class-name">Base</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">void</span> <span class="token function">implementation</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+        <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>Child<span class="token operator">*</span><span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">implementation</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">struct</span> <span class="token class-name">Derived</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token class-name">Base</span><span class="token operator">&lt;</span><span class="token class-name">Derived</span><span class="token operator">></span></span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">void</span> <span class="token function">implementation</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+        std<span class="token double-colon punctuation">::</span>cerr<span class="token operator">&lt;&lt;</span><span class="token string">"Derived implementation\n"</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    Derived d<span class="token punctuation">;</span>
+    d<span class="token punctuation">.</span><span class="token function">implementation</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>由上述代码可见，CRTP可实现类似虚函数的效果，同时避免虚函数调用时的开销（虚函数指针存储及查找）。</p>
+<p><strong>参考资料</strong></p>
+<ol>
+<li><a href="https://zhuanlan.zhihu.com/p/54945314">CRTP教程</a></li>
+<li><a href="https://www.fluentcpp.com/2017/05/16/what-the-crtp-brings-to-code/?utm_source=wechat_session&amp;utm_medium=social&amp;utm_oi=617747135744053248">CRTP能为代码带来什么</a></li>
+</ol>
+]]></content>
+      <categories>
+        <category>cpp</category>
+      </categories>
+      <tags>
+        <tag>C++</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>C++17——结构化绑定</title>
     <url>/2022/01/03/cpp/structured-binding/</url>
     <content><![CDATA[<p>本文内容：</p>
@@ -398,7 +755,7 @@ cout<span class="token operator">&lt;&lt;</span>status<span class="token operato
 <span class="token keyword">const</span> <span class="token keyword">auto</span><span class="token operator">&amp;</span> <span class="token punctuation">[</span>status1<span class="token punctuation">,</span> value1<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">getInfo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 cout<span class="token operator">&lt;&lt;</span>status1<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>value1<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span></code></pre>
 <h2 id="pair和tuple">pair和tuple</h2>
-<p>pair和tuple均是将多种类型元素进行<strong>整合打包</strong>，其中pair仅能打包两个元素，但tuple无此限制</p>
+<p>pair和tuple均是将多种类型元素进行<strong>整合打包</strong>，其中pair仅能打包两个元素，而tuple无此限制</p>
 <h3 id="pair">pair</h3>
 <p>将<strong>两个</strong>不同数据直接整合为一个数据单元，其原型定义和使用方式如下：</p>
 <pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">class</span> <span class="token class-name">T1</span><span class="token punctuation">,</span> <span class="token keyword">class</span> <span class="token class-name">T2</span><span class="token operator">></span> <span class="token keyword">struct</span> <span class="token class-name">pair</span><span class="token punctuation">;</span>
@@ -408,14 +765,13 @@ std<span class="token double-colon punctuation">::</span>pair<span class="token 
 std<span class="token double-colon punctuation">::</span>cout<span class="token operator">&lt;&lt;</span>data<span class="token punctuation">.</span>first<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>data<span class="token punctuation">.</span>second<span class="token operator">&lt;&lt;</span>std<span class="token double-colon punctuation">::</span>endl<span class="token punctuation">;</span></code></pre>
 <h3 id="tuple">tuple</h3>
 <p>可将tuple视为pair的<strong>泛化</strong>版本，pair仅支持绑定两个元素，tuple摆脱此限制<br>
-tuple可使用std::tie()解包，同时兼容.first和.second<br>
-std::ignore其占位符作用，表明不提取对应位元素</p>
+tuple使用<code>std::tie()</code>解包<br>
+<code>std::ignore</code>其占位符作用，表明不提取对应位元素</p>
 <pre class="language-cpp" data-language="cpp"><code class="language-cpp">std<span class="token double-colon punctuation">::</span>tuple<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token punctuation">,</span> string<span class="token punctuation">,</span><span class="token keyword">int</span><span class="token punctuation">,</span> string<span class="token operator">></span> data1 <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">make_tuple</span><span class="token punctuation">(</span><span class="token number">855</span><span class="token punctuation">,</span><span class="token string">"zyp"</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token string">"is handsome"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 
 <span class="token keyword">int</span> a<span class="token punctuation">,</span>c<span class="token punctuation">;</span>
 string b<span class="token punctuation">,</span>d<span class="token punctuation">;</span>
 std<span class="token double-colon punctuation">::</span><span class="token function">tie</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span>b<span class="token punctuation">,</span>c<span class="token punctuation">,</span>d<span class="token punctuation">)</span> <span class="token operator">=</span> data1<span class="token punctuation">;</span>
-std<span class="token double-colon punctuation">::</span>cout<span class="token operator">&lt;&lt;</span>data<span class="token punctuation">.</span>first<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>data<span class="token punctuation">.</span>second<span class="token operator">&lt;&lt;</span>std<span class="token double-colon punctuation">::</span>endl<span class="token punctuation">;</span>
 std<span class="token double-colon punctuation">::</span>cout<span class="token operator">&lt;&lt;</span>a<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>b<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>c<span class="token operator">&lt;&lt;</span><span class="token string">" "</span><span class="token operator">&lt;&lt;</span>d<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
 
 string b1<span class="token punctuation">,</span>d1<span class="token punctuation">;</span>
@@ -438,6 +794,106 @@ std<span class="token double-colon punctuation">::</span>cout<span class="token 
       <tags>
         <tag>C++</tag>
         <tag>Modern C++</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>双机搭建MPI</title>
+    <url>/2022/01/02/mpi1/</url>
+    <content><![CDATA[<p>本文介绍通过SSH连接两台电脑，并成功运行MPI案例</p>
+<span id="more"></span>
+<h2 id="MPI简介">MPI简介</h2>
+<p>MPI是一个通讯协议，可实现多台机器的并行计算<br>
+通俗来说，原本一台电脑的任务，现分配给多台电脑<strong>协作</strong>同步执行<br>
+众所周知，合作离不开沟通，MPI可以抽象理解成多台电脑间的沟通方式(如同人打电话、meeting等)</p>
+<h2 id="简易MPI搭建">简易MPI搭建</h2>
+<p>实验环境：两台Linux虚拟机（<strong>同一局域网</strong>下两台Linux电脑亦可）</p>
+<h2 id="1-通过SSH连接两台电脑">1 通过SSH连接两台电脑</h2>
+<p>注：两台电脑默认在同一局域网内，否则彼此间无法访问</p>
+<h3 id="1-1-SSH简介">1.1 SSH简介</h3>
+<ol>
+<li>连接时两台电脑分别为服务端和客户端，一般Ubuntu自带openssh-client，即客户端软件，充当服务端的电脑需执行apt install openssh-server安装openssh-server</li>
+<li>客户端执行ssh-keygen生成密钥对，一直按enter的话，默认生成在路径./ssh内，可通过cd ~/.ssh进入</li>
+<li>该目录下两个文件id_rsa、id_rsa.pub；前者为私钥，放在客户端，后者为公钥(public)，应放在服务器端，(我是用U盘拷贝到服务器的)</li>
+</ol>
+<h3 id="1-2-ssh配置文件">1.2 ssh配置文件</h3>
+<ol>
+<li>cd /etc/ssh，移动到对应目录，运行ls，其中客户端配置文件为ssh_config, 服务器端为sshd_config</li>
+<li>一般ssh_config使用默认配置即可</li>
+</ol>
+<h3 id="1-3-sshd的配置文件">1.3 sshd的配置文件</h3>
+<ol>
+<li>使用vim打开sshd_config文件，按i进入编辑模式，找到以下对应设置并更改，注意删除对应的前面#</li>
+</ol>
+<pre class="language-vim" data-language="vim"><code class="language-vim">Port <span class="token number">22</span>	端口号，服务器和客户端相同即可
+ListenAddress <span class="token number">0.0</span><span class="token operator">.</span><span class="token number">0.0</span>	打开监听所有端口
+PermitRootLogin yes	允许远程客户进入根权限
+PublicAuthentication yes 打开密钥对认证模式
+AuthorizedKeysFile <span class="token operator">.</span>ssh<span class="token operator">/</span>yourname<span class="token operator">.</span>pub 名称为yourname<span class="token operator">.</span>pub的公钥放置处
+PasswordAuthentication yes 需要密码认证
+PermitEmptyPasswords yes 不允许空密码</code></pre>
+<ol start="2">
+<li>esc, :x, 完成配置。注意x小写，大写的X是加密文件😄</li>
+<li>重新启动ssh、sshd</li>
+</ol>
+<pre class="language-bash" data-language="bash"><code class="language-bash">server <span class="token function">ssh</span> restart
+server sshd restart</code></pre>
+<h3 id="1-4-生成公钥">1.4 生成公钥</h3>
+<p>以下操作<strong>两台电脑</strong>都需要依次执行：</p>
+<ol>
+<li>添加相同用户：adduser mpi，su mpi切换至mpi用户</li>
+<li>运行ssh-keygen -t rsa，在<sub>/.ssh目录下出现后缀名为.pub的文件，将其复制到另一台电脑的</sub>/.ssh目录下，注意文件名称需与sshd_config中设置一致</li>
+<li>运行ifconfig，查看每台的电脑IP<br>
+<img data-src="/pic/mpi1.png" alt="1"></li>
+<li>运行vim /etc/hosts，给IP地址赋别名<br>
+<img data-src="/pic/mpi2.png" alt="2"><br>
+两台电脑hosts文件的设置相同</li>
+<li>在IP地址为node1的电脑上，运行ssh node2尝试连接node2；反之亦然</li>
+</ol>
+<blockquote>
+<p>补充：建议passwd -d mpi将mpi用户的密码删除(如果后续连接不上的话😄)</p>
+</blockquote>
+<h2 id="2-设置NFS挂载文件">2 设置NFS挂载文件</h2>
+<p>两台电脑需区分服务器端和客户端，在服务器端创建共享文件夹，将需要共享的文件放于此文件夹内</p>
+<pre class="language-bash" data-language="bash"><code class="language-bash"><span class="token function">mkdir</span> ~/mpi/cloud</code></pre>
+<blockquote>
+<p>服务端与客户端两者文件位置应一致，方便后续运行mpi</p>
+</blockquote>
+<h3 id="2-1-NFS服务端配置">2.1 NFS服务端配置</h3>
+<ol>
+<li>sudo apt install nfs-kernel-server</li>
+<li>vim /etc/exports，在最后一行添加：</li>
+</ol>
+<pre class="language-vim" data-language="vim"><code class="language-vim"><span class="token operator">/</span>home<span class="token operator">/</span>mpi<span class="token operator">/</span>cloud <span class="token operator">*</span><span class="token punctuation">(</span>rw<span class="token punctuation">,</span>sync<span class="token punctuation">,</span>no_root_squash<span class="token punctuation">,</span>no_subtree_check<span class="token punctuation">)</span></code></pre>
+<ol start="3">
+<li>命令行运行exportfs -a</li>
+<li>刷新服务 sudo service nfs-kernel-server restart</li>
+</ol>
+<h3 id="2-2-NFS客户端配置">2.2 NFS客户端配置</h3>
+<ol>
+<li>sudo apt-get install nfs-common</li>
+<li>mkdir cloud</li>
+<li>sudo mount -t nfs node1:/home/mpiuser/cloud ~/cloud</li>
+<li>df -h可查询是否成功挂载</li>
+</ol>
+<p>此时在客户端应该能够看到服务端的共享文件</p>
+<blockquote>
+<p>注：node1为自己在hosts文件中定义的服务端IP别名</p>
+</blockquote>
+<h2 id="3-运行mpirun">3 运行mpirun</h2>
+<p>默认将编译成功的可执行文件(本案例文件名为test)置于共享文件夹cloud中，移动至该目录下执行：</p>
+<pre class="language-bash" data-language="bash"><code class="language-bash">mpirun -np <span class="token number">4</span> -host node1,node2 ./test</code></pre>
+<p>其中:</p>
+<ul>
+<li>-np 4：表明调用4个进程</li>
+<li>-host node1,node2：指定两台机器的IP地址</li>
+</ul>
+]]></content>
+      <categories>
+        <category>HPC</category>
+      </categories>
+      <tags>
+        <tag>MPI</tag>
+        <tag>高性能计算</tag>
       </tags>
   </entry>
   <entry>
@@ -630,106 +1086,6 @@ dynamic_ptrb_to_ptrd<span class="token operator">-></span><span class="token fun
       </categories>
       <tags>
         <tag>C++</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>双机搭建MPI</title>
-    <url>/2021/12/14/mpi1/</url>
-    <content><![CDATA[<p>本文介绍通过SSH连接两台电脑，并成功运行MPI案例</p>
-<span id="more"></span>
-<h2 id="MPI简介">MPI简介</h2>
-<p>MPI是一个通讯协议，可实现多台机器的并行计算<br>
-通俗来说，原本一台电脑的任务，现分配给多台电脑<strong>协作</strong>同步执行<br>
-众所周知，合作离不开沟通，MPI可以抽象理解成多台电脑间的沟通方式(如同人打电话、meeting等)</p>
-<h2 id="简易MPI搭建">简易MPI搭建</h2>
-<p>实验环境：两台Linux虚拟机（<strong>同一局域网</strong>下两台Linux电脑亦可）</p>
-<h2 id="1-通过SSH连接两台电脑">1 通过SSH连接两台电脑</h2>
-<p>注：两台电脑默认在同一局域网内，否则彼此间无法访问</p>
-<h3 id="1-1-SSH简介">1.1 SSH简介</h3>
-<ol>
-<li>连接时两台电脑分别为服务端和客户端，一般Ubuntu自带openssh-client，即客户端软件，充当服务端的电脑需执行apt install openssh-server安装openssh-server</li>
-<li>客户端执行ssh-keygen生成密钥对，一直按enter的话，默认生成在路径./ssh内，可通过cd ~/.ssh进入</li>
-<li>该目录下两个文件id_rsa、id_rsa.pub；前者为私钥，放在客户端，后者为公钥(public)，应放在服务器端，(我是用U盘拷贝到服务器的)</li>
-</ol>
-<h3 id="1-2-ssh配置文件">1.2 ssh配置文件</h3>
-<ol>
-<li>cd /etc/ssh，移动到对应目录，运行ls，其中客户端配置文件为ssh_config, 服务器端为sshd_config</li>
-<li>一般ssh_config使用默认配置即可</li>
-</ol>
-<h3 id="1-3-sshd的配置文件">1.3 sshd的配置文件</h3>
-<ol>
-<li>使用vim打开sshd_config文件，按i进入编辑模式，找到以下对应设置并更改，注意删除对应的前面#</li>
-</ol>
-<pre class="language-vim" data-language="vim"><code class="language-vim">Port <span class="token number">22</span>	端口号，服务器和客户端相同即可
-ListenAddress <span class="token number">0.0</span><span class="token operator">.</span><span class="token number">0.0</span>	打开监听所有端口
-PermitRootLogin yes	允许远程客户进入根权限
-PublicAuthentication yes 打开密钥对认证模式
-AuthorizedKeysFile <span class="token operator">.</span>ssh<span class="token operator">/</span>yourname<span class="token operator">.</span>pub 名称为yourname<span class="token operator">.</span>pub的公钥放置处
-PasswordAuthentication yes 需要密码认证
-PermitEmptyPasswords yes 不允许空密码</code></pre>
-<ol start="2">
-<li>esc, :x, 完成配置。注意x小写，大写的X是加密文件😄</li>
-<li>重新启动ssh、sshd</li>
-</ol>
-<pre class="language-bash" data-language="bash"><code class="language-bash">server <span class="token function">ssh</span> restart
-server sshd restart</code></pre>
-<h3 id="1-4-生成公钥">1.4 生成公钥</h3>
-<p>以下操作<strong>两台电脑</strong>都需要依次执行：</p>
-<ol>
-<li>添加相同用户：adduser mpi，su mpi切换至mpi用户</li>
-<li>运行ssh-keygen -t rsa，在<sub>/.ssh目录下出现后缀名为.pub的文件，将其复制到另一台电脑的</sub>/.ssh目录下，注意文件名称需与sshd_config中设置一致</li>
-<li>运行ifconfig，查看每台的电脑IP<br>
-<img data-src="/pic/mpi1.png" alt="1"></li>
-<li>运行vim /etc/hosts，给IP地址赋别名<br>
-<img data-src="/pic/mpi2.png" alt="2"><br>
-两台电脑hosts文件的设置相同</li>
-<li>在IP地址为node1的电脑上，运行ssh node2尝试连接node2；反之亦然</li>
-</ol>
-<blockquote>
-<p>补充：建议passwd -d mpi将mpi用户的密码删除(如果后续连接不上的话😄)</p>
-</blockquote>
-<h2 id="2-设置NFS挂载文件">2 设置NFS挂载文件</h2>
-<p>两台电脑需区分服务器端和客户端，在服务器端创建共享文件夹，将需要共享的文件放于此文件夹内</p>
-<pre class="language-bash" data-language="bash"><code class="language-bash"><span class="token function">mkdir</span> ~/mpi/cloud</code></pre>
-<blockquote>
-<p>服务端与客户端两者文件位置应一致，方便后续运行mpi</p>
-</blockquote>
-<h3 id="2-1-NFS服务端配置">2.1 NFS服务端配置</h3>
-<ol>
-<li>sudo apt install nfs-kernel-server</li>
-<li>vim /etc/exports，在最后一行添加：</li>
-</ol>
-<pre class="language-vim" data-language="vim"><code class="language-vim"><span class="token operator">/</span>home<span class="token operator">/</span>mpi<span class="token operator">/</span>cloud <span class="token operator">*</span><span class="token punctuation">(</span>rw<span class="token punctuation">,</span>sync<span class="token punctuation">,</span>no_root_squash<span class="token punctuation">,</span>no_subtree_check<span class="token punctuation">)</span></code></pre>
-<ol start="3">
-<li>命令行运行exportfs -a</li>
-<li>刷新服务 sudo service nfs-kernel-server restart</li>
-</ol>
-<h3 id="2-2-NFS客户端配置">2.2 NFS客户端配置</h3>
-<ol>
-<li>sudo apt-get install nfs-common</li>
-<li>mkdir cloud</li>
-<li>sudo mount -t nfs node1:/home/mpiuser/cloud ~/cloud</li>
-<li>df -h可查询是否成功挂载</li>
-</ol>
-<p>此时在客户端应该能够看到服务端的共享文件</p>
-<blockquote>
-<p>注：node1为自己在hosts文件中定义的服务端IP别名</p>
-</blockquote>
-<h2 id="3-运行mpirun">3 运行mpirun</h2>
-<p>默认将编译成功的可执行文件(本案例文件名为test)置于共享文件夹cloud中，移动至该目录下执行：</p>
-<pre class="language-bash" data-language="bash"><code class="language-bash">mpirun -np <span class="token number">4</span> -host node1,node2 ./test</code></pre>
-<p>其中:</p>
-<ul>
-<li>-np 4：表明调用4个进程</li>
-<li>-host node1,node2：指定两台机器的IP地址</li>
-</ul>
-]]></content>
-      <categories>
-        <category>HPC</category>
-      </categories>
-      <tags>
-        <tag>MPI</tag>
-        <tag>高性能计算</tag>
       </tags>
   </entry>
   <entry>
@@ -1190,15 +1546,6 @@ cout<span class="token operator">&lt;&lt;</span>svd<span class="token punctuatio
       </tags>
   </entry>
   <entry>
-    <title>RTTI与Union类</title>
-    <url>/2021/11/24/cpp/regexAndRandom/</url>
-    <content><![CDATA[<p>挖坑待补充</p>
-<span id="more"></span>
-<h2 id="1-运行时类型识别-run-time-type-identification-RTTI">1 运行时类型识别(run-time type identification, RTTI)</h2>
-<h2 id="2-union">2 union</h2>
-]]></content>
-  </entry>
-  <entry>
     <title>重载运算符与类型转换</title>
     <url>/2021/11/19/cpp/cpp2operator/</url>
     <content><![CDATA[<p>本文主要介绍几个印象深刻的点：</p>
@@ -1529,8 +1876,92 @@ vector<span class="token operator">&lt;</span><span class="token keyword">int</s
       </tags>
   </entry>
   <entry>
+    <title>随笔——《人类群星闪耀时》</title>
+    <url>/2021/11/07/read/decisive-moments-in-history/</url>
+    <content><![CDATA[<p><a href="https://book.douban.com/subject/1201620/">豆瓣链接：《人类群星闪耀时》茨威格</a><br>
+<a href="https://book.douban.com/subject/26828753/">豆瓣链接：《一个陌生女人的来信》茨威格</a></p>
+<p>茨威格的笔触相当细腻且富有感情。<br>
+(以至于我总觉得《一个陌生女人的来信》是他的自传😤)</p>
+<span id="more"></span>
+<p>这也是前几年读的了，整理文件时找到部分当年的摘抄，现整理如下：</p>
+<ol>
+<li>怀表的发条耐性在暗中数着你的钟点，量着你的时间，用听不见的心跳伴着你的行踪，而在它嘀嗒嘀嗒转动的几百万秒之中，你只有一次向它匆匆瞥了一眼。</li>
+</ol>
+<p align="right">——《一个陌生女人的来信》</p>
+<blockquote>
+<p>用怀表比作暗恋中的人，太生动了！</p>
+</blockquote>
+<h2 id="《人类群星闪耀时》摘抄及涉及主要内容">《人类群星闪耀时》摘抄及涉及主要内容</h2>
+<ol>
+<li>人生最大的幸运，莫过于在他的人生中途，即在他年富力强时发现了自己的人生使命。</li>
+<li>同代人往往很难一眼就看出一个人的伟大或一部作品的伟大</li>
+</ol>
+<blockquote>
+<p>能经历时间和空间考验的作品，必定是伟大的。时间和空间帮助我们选择好的作品。</p>
+</blockquote>
+<ol start="3">
+<li>一个人找到了自己的人生使命，一个使命也找到了它所需要的人。</li>
+</ol>
+<blockquote>
+<p>伟人有着相似的性格特点，例如坚毅、果断等。但即使我们知道，也难以习得。</p>
+</blockquote>
+<ol start="4">
+<li>坚定的一直总是能推动着那些犹豫的人向前。</li>
+<li>当一个人83岁的时候，是不应该再在死亡面前紧闭双眼的，他应该要直面死亡。</li>
+<li>我想出去走走，可能要在外面待一会儿。</li>
+</ol>
+<blockquote>
+<p>对话发生在南极科考，当时队伍遇难，急缺食物等物资。虽然语气很平静，但给我留下极深刻的印象(都快两年了，我还没忘记😂，意难平意难平！)</p>
+</blockquote>
+<ol start="7">
+<li>在卓越的对抗中，壮烈的死亡可以孕育出新的生命，一次毁灭也可以生出攀登高峰的奋起意志。</li>
+<li>作家可能只会偶尔创作，但现实生活中却早已将其演绎了千百遍。</li>
+</ol>
+<p align="right">——《人类群星闪耀时》</p>
+<p><strong>《人类群星闪耀时》主要涉及的历史点：</strong></p>
+<ul>
+<li>巴尔沃亚(西班牙)——首次发现太平洋：残忍对待当地土著(大航海旨在搜刮财富)</li>
+<li>苏丹穆罕默德二世(奥斯曼帝国)：攻占拜占庭首都君士坦丁堡：宗教是统治工具</li>
+<li>亨德尔(德)——偏瘫中奇迹恢复并创造圣歌《弥赛亚》：宗教为亨德尔提供力量</li>
+<li>鲁热(法)——几小时创作《马赛曲》，随后作为法国国歌</li>
+<li>格鲁希(法)——误判形势导致拿破仑惨败滑铁卢：循规蹈矩与打破规则？</li>
+<li>歌德(德)——爱情绝唱《玛丽恩巴德哀歌》</li>
+<li>苏特尔(瑞士)——引发美国西部淘金热</li>
+<li>陀思妥耶夫斯基(俄)——临刑前一分钟获沙皇特赦</li>
+<li>菲尔德(美)——铺设大西洋海底电缆</li>
+<li>托尔斯泰(俄)——生命最后时刻离家出走</li>
+<li>英国探险队：第二个到达南极点，归途相继殒命</li>
+<li>列宁(俄)：从流亡地瑞士重返俄国</li>
+<li>西塞罗(古罗马)：未能挽救共和政体</li>
+<li>威尔逊(美)：未能实现一战后和平计划</li>
+</ul>
+]]></content>
+      <categories>
+        <category>随笔</category>
+      </categories>
+      <tags>
+        <tag>随笔</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>随笔——《哲学的慰藉》</title>
+    <url>/2021/11/07/read/read210107/</url>
+    <content><![CDATA[<p><a href="https://book.douban.com/subject/1045201/">豆瓣链接：《哲学的慰藉》阿兰·德波顿</a></p>
+<span id="more"></span>
+<p>这是去年读的书了，清理笔记时发现一张当时总结的思维导图，放在这里做个纪念。<br>
+(果然是忘记得差不多了😅)<br>
+<img data-src="/pic/%E5%93%B2%E5%AD%A6%E7%9A%84%E6%85%B0%E8%97%89.png" alt="思维导图"></p>
+]]></content>
+      <categories>
+        <category>随笔</category>
+      </categories>
+      <tags>
+        <tag>随笔</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>心理学与伪心理学</title>
-    <url>/2021/11/07/psychology1/</url>
+    <url>/2021/11/07/read/psychology1/</url>
     <content><![CDATA[<p>这是我画的一个饼:)，放假有空再补充</p>
 <span id="more"></span>
 ]]></content>
@@ -1542,32 +1973,11 @@ vector<span class="token operator">&lt;</span><span class="token keyword">int</s
       </tags>
   </entry>
   <entry>
-    <title>对象移动与赋值</title>
-    <url>/2021/11/07/cpp/assignmentAndMove/</url>
-    <content><![CDATA[<p>主要内容：</p>
-<ol>
-<li>右值与对象移动(很amazing)</li>
-<li>拷贝并交换技术</li>
-</ol>
-<span id="more"></span>
-<h2 id="右值">右值</h2>
-<p>右值、纯右值、将亡值</p>
-<h2 id="对象移动">对象移动</h2>
-<h2 id="赋值运算符">赋值运算符</h2>
-<h3 id="正确处理自赋值">正确处理自赋值</h3>
-<h3 id="拷贝并交换技术">拷贝并交换技术</h3>
-]]></content>
-      <categories>
-        <category>cpp</category>
-      </categories>
-      <tags>
-        <tag>C++</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>CUDA-流总结</title>
     <url>/2021/11/07/cuda/streams/</url>
-    <content><![CDATA[<p>本文简单介绍CUDA背景知识，并通过GPU运行Hello World</p>
+    <content><![CDATA[<p>比较乱，后续有空再重写。<br>
+用“流”关键是处理好每个流所负责的数据，计算好内存偏移量。<br>
+应避免重复处理或遗漏数据。</p>
 <span id="more"></span>
 <h1>1 为什么要使用流</h1>
 <h1>2 基础知识</h1>

@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  背景
+  #
+
+为方便调试Kernel内USB的相关模块，本文介绍基于QEMU调试USB设备的方式。
+实现在QEMU内运行ARM64 kernel，识别U盘并进行读写等操作。
+
+  基本环境
+  #
+
+
+Ubuntu 20
+QEMU emulator version 8.2.2
+clang version 18.1.8
+buildroot-2024.05.2
+Kernel Source Code: linux-5.15.163
+
+
+  步骤
+  #
+
+主要包括：内核编译、内核模块编译、rootfs编译与QEMU启动四部分
+
+  内核编译
+  #
+
+源码: 
+  https://kernel.org/
+下载完成后依次执行：
+make menuconfig ARCH=arm64 LLVM=1
+// 建议开启以下Kconfig
+// CONFIG_USB_ANNOUNCE_NEW_DEVICES
+// CONFIG_USB_UAS
+// CONFIG_USB_STORAGE
+// CONFIG_STACKTRACE
+
+make ARCH=arm64 LLVM=1 -j16
+
+注：Clang等编译环境需提前配置好，这里不赘述
+
+
+  内核模块编译
+  #
+
+在调试的过程中，发现识别U盘依赖部分内核模块
+默认的内核编译命令会编译使能的模块，但生成的ko文件分散在各个文件夹内
+可在编译时传入参数INSTALL_MOD_PATH，指定内核模块的存储位置，方便后续存放至rootfs内
+make ARCH=arm64 LLVM=1 INSTALL_MOD_PATH=/home/zyp/workplace/linux-5.15.163 modules_install -j16
+执行后，编译生成的模块将被存放至kernel源码根目录的lib/modules/下
+为加快运行速度，可仅保留与调试USB相关的内核模块，即kernel/drivers/usb/文件夹
+zyp@hp ~/workplace/linux-5.15.163/lib/modules/5.15.163-g7c2cad57e872$ tree -L 4
+.
+├── build -&gt; /home/zyp/workplace/linux-5.15.163
+├── kernel
+│   └── drivers
+│       └── usb
+│           ├── class
+│           ├── gadget
+│           ├── host
+│           ├── renesas_usbhs
+│           ├── serial
+│           └── typec
+├── modules.alias  
+├── modules.alias.bin  
+├── modules.builtin  
+├── modules.builtin.alias.bin  
+├── modules.builtin.bin  
+├── modules.builtin.modinfo  
+├── modules.dep  
+├── modules.dep.bin  
+├── modules.devname  
+├── modules.order  
+├── modules.softdep  
+├── modules.symbols  
+├── modules.symbols.bin  
+└── source -&gt; /home/zyp/workplace/linux-5.15.163
+
+  rootfs
+  #
+
+本文采用buildroot配置rootfs: 
+  https://buildroot.org/
+相较于busybox，buildroot提供更全面的内置功能支持">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://wonderzyp.github.io/docs/kernel_code/build_setup/case1_usb/">
+  <meta property="og:site_name" content="Yep Kernel">
+  <meta property="og:title" content="案例1：基于QEMU调试内核USB模块">
+  <meta property="og:description" content=" 背景 # 为方便调试Kernel内USB的相关模块，本文介绍基于QEMU调试USB设备的方式。 实现在QEMU内运行ARM64 kernel，识别U盘并进行读写等操作。
+基本环境 # Ubuntu 20 QEMU emulator version 8.2.2 clang version 18.1.8 buildroot-2024.05.2 Kernel Source Code: linux-5.15.163 步骤 # 主要包括：内核编译、内核模块编译、rootfs编译与QEMU启动四部分
+内核编译 # 源码: https://kernel.org/ 下载完成后依次执行：
+make menuconfig ARCH=arm64 LLVM=1 // 建议开启以下Kconfig // CONFIG_USB_ANNOUNCE_NEW_DEVICES // CONFIG_USB_UAS // CONFIG_USB_STORAGE // CONFIG_STACKTRACE make ARCH=arm64 LLVM=1 -j16 注：Clang等编译环境需提前配置好，这里不赘述
+内核模块编译 # 在调试的过程中，发现识别U盘依赖部分内核模块 默认的内核编译命令会编译使能的模块，但生成的ko文件分散在各个文件夹内 可在编译时传入参数INSTALL_MOD_PATH，指定内核模块的存储位置，方便后续存放至rootfs内
+make ARCH=arm64 LLVM=1 INSTALL_MOD_PATH=/home/zyp/workplace/linux-5.15.163 modules_install -j16 执行后，编译生成的模块将被存放至kernel源码根目录的lib/modules/下 为加快运行速度，可仅保留与调试USB相关的内核模块，即kernel/drivers/usb/文件夹
+zyp@hp ~/workplace/linux-5.15.163/lib/modules/5.15.163-g7c2cad57e872$ tree -L 4 . ├── build -&gt; /home/zyp/workplace/linux-5.15.163 ├── kernel │ └── drivers │ └── usb │ ├── class │ ├── gadget │ ├── host │ ├── renesas_usbhs │ ├── serial │ └── typec ├── modules.alias ├── modules.alias.bin ├── modules.builtin ├── modules.builtin.alias.bin ├── modules.builtin.bin ├── modules.builtin.modinfo ├── modules.dep ├── modules.dep.bin ├── modules.devname ├── modules.order ├── modules.softdep ├── modules.symbols ├── modules.symbols.bin └── source -&gt; /home/zyp/workplace/linux-5.15.163 rootfs # 本文采用buildroot配置rootfs: https://buildroot.org/ 相较于busybox，buildroot提供更全面的内置功能支持">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>案例1：基于QEMU调试内核USB模块 | Yep Kernel</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="https://wonderzyp.github.io/docs/kernel_code/build_setup/case1_usb/">
+<link rel="stylesheet" href="/book.min.e8b910960a63e3b83d39d5aa6c2cf492e8ac8bd89c66ce08a1fd46493a70e954.css" integrity="sha256-6LkQlgpj47g9OdWqbCz0kuisi9icZs4Iof1GSTpw6VQ=" crossorigin="anonymous">
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.176bddd9d4961525b394e756ca92ddbb4009dfc00209d68b221fa7723dcc7d08.js" integrity="sha256-F2vd2dSWFSWzlOdWypLdu0AJ38ACCdaLIh&#43;ncj3MfQg=" crossorigin="anonymous"></script>
+
+  <script defer src="/sw.min.6f6f90fcb8eb1c49ec389838e6b801d0de19430b8e516902f8d75c3c8bd98739.js" integrity="sha256-b2&#43;Q/LjrHEnsOJg45rgB0N4ZQwuOUWkC&#43;NdcPIvZhzk=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/"><span>Yep Kernel</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Linux Kernel 源码阅读与调试</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-54ffcb072bf89c7f76ccef3b8602063d" class="toggle" checked />
+    <label for="section-54ffcb072bf89c7f76ccef3b8602063d" class="flex justify-between">
+      <a role="button" class="">环境准备</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kernel_code/build_setup/build_kernel/" class="">编译准备</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kernel_code/build_setup/case1_usb/" class="active">案例1：基于QEMU调试内核USB模块</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>工具</span>
+  
+
+          
+  <ul>
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com/wonderzyp/"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+  <li>
+    <a href="https://wonderzyp.github.io/docs/intro/about_me/"  target="_blank" rel="noopener">
+        About Me
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>案例1：基于QEMU调试内核USB模块</strong>
+
+  <label for="toc-control">
+    
+    <img src="/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#背景">背景</a></li>
+        <li><a href="#基本环境">基本环境</a></li>
+        <li><a href="#步骤">步骤</a>
+          <ul>
+            <li><a href="#内核编译">内核编译</a></li>
+            <li><a href="#内核模块编译">内核模块编译</a></li>
+            <li><a href="#rootfs">rootfs</a></li>
+            <li><a href="#qemu配置与启动">QEMU配置与启动</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h2 id="背景">
+  背景
+  <a class="anchor" href="#%e8%83%8c%e6%99%af">#</a>
+</h2>
+<p>为方便调试Kernel内USB的相关模块，本文介绍基于QEMU调试USB设备的方式。
+实现在QEMU内运行ARM64 kernel，识别U盘并进行读写等操作。</p>
+<h2 id="基本环境">
+  基本环境
+  <a class="anchor" href="#%e5%9f%ba%e6%9c%ac%e7%8e%af%e5%a2%83">#</a>
+</h2>
+<ul>
+<li>Ubuntu 20</li>
+<li>QEMU emulator version 8.2.2</li>
+<li>clang version 18.1.8</li>
+<li>buildroot-2024.05.2</li>
+<li>Kernel Source Code: linux-5.15.163</li>
+</ul>
+<h2 id="步骤">
+  步骤
+  <a class="anchor" href="#%e6%ad%a5%e9%aa%a4">#</a>
+</h2>
+<p>主要包括：内核编译、内核模块编译、rootfs编译与QEMU启动四部分</p>
+<h3 id="内核编译">
+  内核编译
+  <a class="anchor" href="#%e5%86%85%e6%a0%b8%e7%bc%96%e8%af%91">#</a>
+</h3>
+<p>源码: 
+  <a href="https://kernel.org/">https://kernel.org/</a>
+下载完成后依次执行：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>make menuconfig ARCH<span style="color:#f92672">=</span>arm64 LLVM<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>// 建议开启以下Kconfig
+</span></span><span style="display:flex;"><span>// CONFIG_USB_ANNOUNCE_NEW_DEVICES
+</span></span><span style="display:flex;"><span>// CONFIG_USB_UAS
+</span></span><span style="display:flex;"><span>// CONFIG_USB_STORAGE
+</span></span><span style="display:flex;"><span>// CONFIG_STACKTRACE
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>make ARCH<span style="color:#f92672">=</span>arm64 LLVM<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span> -j16
+</span></span></code></pre></div><blockquote>
+<p>注：Clang等编译环境需提前配置好，这里不赘述</p>
+</blockquote>
+<h3 id="内核模块编译">
+  内核模块编译
+  <a class="anchor" href="#%e5%86%85%e6%a0%b8%e6%a8%a1%e5%9d%97%e7%bc%96%e8%af%91">#</a>
+</h3>
+<p>在调试的过程中，发现识别U盘依赖部分内核模块
+默认的内核编译命令会编译使能的模块，但生成的ko文件分散在各个文件夹内
+可在编译时传入参数<code>INSTALL_MOD_PATH</code>，指定内核模块的存储位置，方便后续存放至rootfs内</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>make ARCH<span style="color:#f92672">=</span>arm64 LLVM<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span> INSTALL_MOD_PATH<span style="color:#f92672">=</span>/home/zyp/workplace/linux-5.15.163 modules_install -j16
+</span></span></code></pre></div><p>执行后，编译生成的模块将被存放至kernel源码根目录的<code>lib/modules/</code>下
+为加快运行速度，可仅保留与调试USB相关的内核模块，即<code>kernel/drivers/usb/</code>文件夹</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>zyp@hp ~/workplace/linux-5.15.163/lib/modules/5.15.163-g7c2cad57e872$ tree -L <span style="color:#ae81ff">4</span>
+</span></span><span style="display:flex;"><span>.
+</span></span><span style="display:flex;"><span>├── build -&gt; /home/zyp/workplace/linux-5.15.163
+</span></span><span style="display:flex;"><span>├── kernel
+</span></span><span style="display:flex;"><span>│   └── drivers
+</span></span><span style="display:flex;"><span>│       └── usb
+</span></span><span style="display:flex;"><span>│           ├── class
+</span></span><span style="display:flex;"><span>│           ├── gadget
+</span></span><span style="display:flex;"><span>│           ├── host
+</span></span><span style="display:flex;"><span>│           ├── renesas_usbhs
+</span></span><span style="display:flex;"><span>│           ├── serial
+</span></span><span style="display:flex;"><span>│           └── typec
+</span></span><span style="display:flex;"><span>├── modules.alias  
+</span></span><span style="display:flex;"><span>├── modules.alias.bin  
+</span></span><span style="display:flex;"><span>├── modules.builtin  
+</span></span><span style="display:flex;"><span>├── modules.builtin.alias.bin  
+</span></span><span style="display:flex;"><span>├── modules.builtin.bin  
+</span></span><span style="display:flex;"><span>├── modules.builtin.modinfo  
+</span></span><span style="display:flex;"><span>├── modules.dep  
+</span></span><span style="display:flex;"><span>├── modules.dep.bin  
+</span></span><span style="display:flex;"><span>├── modules.devname  
+</span></span><span style="display:flex;"><span>├── modules.order  
+</span></span><span style="display:flex;"><span>├── modules.softdep  
+</span></span><span style="display:flex;"><span>├── modules.symbols  
+</span></span><span style="display:flex;"><span>├── modules.symbols.bin  
+</span></span><span style="display:flex;"><span>└── source -&gt; /home/zyp/workplace/linux-5.15.163
+</span></span></code></pre></div><h3 id="rootfs">
+  rootfs
+  <a class="anchor" href="#rootfs">#</a>
+</h3>
+<p>本文采用buildroot配置rootfs: 
+  <a href="https://buildroot.org/">https://buildroot.org/</a>
+相较于busybox，buildroot提供更全面的内置功能支持</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>zyp@hp ~/workplace/buildroot-2024.05.2$ make menuconfig
+</span></span><span style="display:flex;"><span>// 几个关键配置项如下
+</span></span><span style="display:flex;"><span>Target options  ---&gt;
+</span></span><span style="display:flex;"><span>        Target Architecture <span style="color:#f92672">(</span>AArch64 <span style="color:#f92672">(</span>little endian<span style="color:#f92672">))</span>
+</span></span><span style="display:flex;"><span>        Target Architecture Variant <span style="color:#f92672">(</span>cortex-A72<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Toolchain  ---&gt;
+</span></span><span style="display:flex;"><span>        Kernel Headers <span style="color:#f92672">(</span>Linux 5.15.x kernel headers<span style="color:#f92672">)</span> // 按需配置
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">[</span>*<span style="color:#f92672">]</span> Enable C++ support
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">[</span>*<span style="color:#f92672">]</span> Enable compiler OpenMP support
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>System configuration  ---&gt;
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">(</span>qemu-kernel<span style="color:#f92672">)</span> System hostname // 随意
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">(</span>Welcome to QEMU Kernel<span style="color:#f92672">)</span> System banner
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Kernel  ---&gt;
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">[</span> <span style="color:#f92672">]</span> Linux Kernel // 勿选中，kernel自行编译
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>// 配置完成后可直接执行make
+</span></span><span style="display:flex;"><span>zyp@hp ~/workplace/buildroot-2024.05.2$ make
+</span></span></code></pre></div><p>编译时间较长，完成后产物为<code>output/images/rootfs.tar</code></p>
+<p>在根目录创建 rootfs 文件夹，用于存放解压 rootfs.tar 的内容</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>mkdir ~/rootfs
+</span></span><span style="display:flex;"><span>cd rootfs
+</span></span><span style="display:flex;"><span>tar -xvf rootfs.tar
+</span></span><span style="display:flex;"><span>rm rootfs.tar
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>zyp@hp ~/rootfs$ ls
+</span></span><span style="display:flex;"><span>bin  dev  etc  lib  lib64  linuxrc  media  mnt  opt  proc  root  run  sbin  sys  tmp  usr  var
+</span></span></code></pre></div><p>修改部分文件配置：</p>
+<pre tabindex="0"><code>// 同目录下复制一个init文件，用作启动时的init进程（这里暂不清楚为何在qemu启动参数中，直接指定linuxrc不可行）
+zyp@hp ~/rootfs$ cp linuxrc init
+
+// 修改/etc/fstab文件，结尾新增一项用于动态识别/dev/sdaX
+devtmpfs    /dev        devtmpfs defaults 0 0
+</code></pre><h3 id="qemu配置与启动">
+  QEMU配置与启动
+  <a class="anchor" href="#qemu%e9%85%8d%e7%bd%ae%e4%b8%8e%e5%90%af%e5%8a%a8">#</a>
+</h3>
+<p>以某U盘为例，查询其相关信息，用于传入QEMU启动参数</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 在Host环境查询其vendorID与productID</span>
+</span></span><span style="display:flex;"><span>zyp@hp ~/workplace/qemu_kernel_wp$ lsusb
+</span></span><span style="display:flex;"><span>Bus <span style="color:#ae81ff">004</span> Device 003: ID 0781:55a9 SanDisk Corp.  SanDisk 3.2Gen1
+</span></span></code></pre></div><p>调试USB时，需在QEMU启动时执行部分USB相关配置参数，以保证USB的正常功能。
+以下为参考脚本，实际使用时需自行修改相关文件路径</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e">#!/bin/bash
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#set -x </span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> start_qemu <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    /home/zyp/software/qemu-8.2.2/build/qemu-system-aarch64 <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>                    -M virt <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>                    -cpu cortex-a72 <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>                    -smp <span style="color:#ae81ff">4</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>                    -m 4G <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>                    -kernel ./Image <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>                    -initrd ./initrd-busybox.img <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>                    -device qemu-xhci <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>                    -device usb-host,vendorid<span style="color:#f92672">=</span>0x0781,productid<span style="color:#f92672">=</span>0x55a9 <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>                    -nographic <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>                    -append <span style="color:#e6db74">&#34;init=/init nokaslr console=ttyAMA0&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> prepare_Image <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    cp /home/zyp/workplace/linux-5.15.163/arch/arm64/boot/Image .
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;Copy Kernel Image Successfully!&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> prepare_VFS <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    orig_dir<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>pwd<span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>    target_dir<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;/home/zyp/rootfs&#34;</span>
+</span></span><span style="display:flex;"><span>    pushd <span style="color:#e6db74">&#34;</span>$target_dir<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    find . -print0 | cpio --null -ov --format<span style="color:#f92672">=</span>newc | /home/zyp/software/pigz/pigz -9 &gt; ../initrd-busybox.img
+</span></span><span style="display:flex;"><span>    cp ../initrd-busybox.img $orig_dir
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    popd
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;Prepare VFS Successfully!&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> prepare_ko <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    rootfs_dir<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;/home/zyp/rootfs/&#34;</span>
+</span></span><span style="display:flex;"><span>    kernel_dir<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;/home/zyp/workplace/linux-5.15.163/&#34;</span>
+</span></span><span style="display:flex;"><span>    find $kernel_dir -name <span style="color:#e6db74">&#34;zyp*ko&#34;</span> -exec cp <span style="color:#f92672">{}</span> $rootfs_dir <span style="color:#ae81ff">\;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;Copy Kernel Modules Successfully!&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> prepare_modules <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    rootfs_lib_dir<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;/home/zyp/rootfs/lib/&#34;</span>
+</span></span><span style="display:flex;"><span>    modules_dir<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;/home/zyp/workplace/linux-5.15.163/lib/modules&#34;</span>
+</span></span><span style="display:flex;"><span>    cp -r $modules_dir $rootfs_lib_dir
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;Copy ko for modprobe successfully!&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> init_env <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    prepare_Image
+</span></span><span style="display:flex;"><span>    prepare_ko
+</span></span><span style="display:flex;"><span>    prepare_modules
+</span></span><span style="display:flex;"><span>    prepare_VFS
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>init_env
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#set +x</span>
+</span></span><span style="display:flex;"><span>start_qemu
+</span></span></code></pre></div><p>启动后有类似下述输出：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>Welcome to QEMU Kernel
+</span></span><span style="display:flex;"><span>qemu-kernel login: root
+</span></span></code></pre></div><p>欲识别USB设备，需先加载相关内核模块(<code>xhci-pci</code>)</p>
+<pre tabindex="0"><code># modprobe xhci-pci
+[   50.580266] xhci_hcd 0000:00:02.0: xHCI Host Controller
+[   50.580852] xhci_hcd 0000:00:02.0: new USB bus registered, assigned bus number 1
+[   50.585094] xhci_hcd 0000:00:02.0: hcc params 0x00087001 hci version 0x100 quirks 0x0000000000000010
+[   50.587794] xhci_hcd 0000:00:02.0: xHCI Host Controller
+[   50.587934] xhci_hcd 0000:00:02.0: new USB bus registered, assigned bus number 2
+[   50.588136] xhci_hcd 0000:00:02.0: Host supports USB 3.0 SuperSpeed
+[   50.591668] usb usb1: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 5.15
+[   50.591859] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[   50.592005] usb usb1: Product: xHCI Host Controller
+[   50.592116] usb usb1: Manufacturer: Linux 5.15.163-g7c2cad57e872 xhci-hcd
+[   50.592252] usb usb1: SerialNumber: 0000:00:02.0
+[   50.595835] hub 1-0:1.0: USB hub found
+[   50.596448] hub 1-0:1.0: 4 ports detected
+[   50.600566] usb usb2: We don&#39;t know the algorithms for LPM for this host, disabling LPM.
+[   50.601038] usb usb2: New USB device found, idVendor=1d6b, idProduct=0003, bcdDevice= 5.15
+[   50.601203] usb usb2: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[   50.601338] usb usb2: Product: xHCI Host Controller
+[   50.601428] usb usb2: Manufacturer: Linux 5.15.163-g7c2cad57e872 xhci-hcd
+[   50.601547] usb usb2: SerialNumber: 0000:00:02.0
+[   50.602501] hub 2-0:1.0: USB hub found
+[   50.602778] hub 2-0:1.0: 4 ports detected
+# [   50.944031] usb 2-1: new SuperSpeed USB device number 2 using xhci_hcd
+[   50.968823] usb 2-1: New USB device found, idVendor=0781, idProduct=55a9, bcdDevice= 1.00
+[   50.969059] usb 2-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[   50.969205] usb 2-1: Product:  SanDisk 3.2Gen1
+[   50.969301] usb 2-1: Manufacturer:  USB
+[   50.969403] usb 2-1: SerialNumber: 0401ecfc7dff80cacbb13dfeef8d232f74924cbcc749be0b88ca65e183b126dd9c5000000000000000000000a0f8d9f5ff0e2b18a955810761aca95d
+[   50.972923] usb-storage 2-1:1.0: USB Mass Storage device detected
+[   50.975211] scsi host0: usb-storage 2-1:1.0
+[   52.013784] scsi 0:0:0:0: Direct-Access      USB      SanDisk 3.2Gen1 1.00 PQ: 0 ANSI: 6
+[   52.018127] sd 0:0:0:0: [sda] 120164352 512-byte logical blocks: (61.5 GB/57.3 GiB)
+[   52.022135] sd 0:0:0:0: [sda] Write Protect is off
+[   52.023948] sd 0:0:0:0: [sda] Write cache: disabled, read cache: enabled, doesn&#39;t support DPO or FUA
+[   52.049430]  sda: sda1
+[   52.061278] sd 0:0:0:0: [sda] Attached SCSI removable disk
+</code></pre><p>此时已识别到<code>sda</code>设备，将其挂载至特定目录下，即可对USB进行读写等操作。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>// 挂载设备
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># cd /mnt</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># mkdir zyp  // 用于挂载</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># mount /dev/sda1 /mnt/zyp/  </span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>   44.609076<span style="color:#f92672">]</span> FAT-fs <span style="color:#f92672">(</span>sda1<span style="color:#f92672">)</span>: Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+</span></span></code></pre></div><p>至此，操作<code>/mnt</code>目录可进行相关调试工作。</p>
+<p><a  href="/docs/kernel_code/build_setup/build_kernel/"   class="book-btn">
+  Prev
+</a>
+
+<a   class="book-btn">
+  Next
+</a>
+</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#背景">背景</a></li>
+        <li><a href="#基本环境">基本环境</a></li>
+        <li><a href="#步骤">步骤</a>
+          <ul>
+            <li><a href="#内核编译">内核编译</a></li>
+            <li><a href="#内核模块编译">内核模块编译</a></li>
+            <li><a href="#rootfs">rootfs</a></li>
+            <li><a href="#qemu配置与启动">QEMU配置与启动</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

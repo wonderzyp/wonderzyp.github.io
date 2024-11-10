@@ -4,6 +4,3 @@ bookFlatSection: true
 bookCollapseSection: true
 title: "Linux Kernel"
 ---
-
-# Introduction
-TBD

@@ -1,5 +1,6 @@
 ---
 title: Welcome to YEP Kernel
+bookToc: false
 type: docs
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: "案例-基于crash-utility分析非法地址访问panic"
-weight: 1
+weight: 2
 ---
 
 ## 背景

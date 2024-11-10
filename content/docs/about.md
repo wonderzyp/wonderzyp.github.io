@@ -18,7 +18,7 @@ bookToc: false
 - 稳定性工具开发
     - 开发crash的[crash-qcom-ipclog](https://github.com/wonderzyp/crash-qcom-ipclog)插件，支持输出高通部分自定义log。
     - 发现并解决crash工具bug，提出patch并合入社区主线
-    - 基于jenkins搭建自动化解析平台，支持 QNX/Android 的coredump与memorydump解析
+    - 基于docker+jenkins搭建自动化解析平台，支持 QNX/Android 的coredump与memorydump解析
 
 
 ### 2021年9月 至 2023年7月：国产自研CFD软件并行化开发

@@ -1,6 +1,6 @@
 ---
-weight: 1
+weight: 2
 bookCollapseSection: true
 bookToc: false
-title: "内核调试环境准备"
+title: "Memory"
 ---

@@ -1,6 +1,6 @@
 ---
-weight: 1
+weight: 3
 bookCollapseSection: true
 bookToc: false
-title: "内核调试环境准备"
+title: "Utils for Kernel"
 ---

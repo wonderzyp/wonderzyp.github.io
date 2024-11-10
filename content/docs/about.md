@@ -1,5 +1,5 @@
 ---
-bookHidden: false
+bookHidden: true
 title: "About Me"
 bookToc: false
 ---

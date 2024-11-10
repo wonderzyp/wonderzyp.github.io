@@ -17,6 +17,18 @@ enableGitInfo = true
 # You can remove related files with config below
 disableKinds = ['taxonomy', 'taxonomyTerm']
 
+[menu]
+# [[menu.before]]
+[[menu.after]]
+  name = "About Me"
+  url = "https://wonderzyp.github.io/docs/about/"
+  weight = 9
+
+[[menu.after]]
+  name = "Github"
+  url = "https://github.com/wonderzyp"
+  weight = 10
+
 [params]
   # (Optional, default light) Sets color theme: light, dark or auto.
   # Theme 'auto' switches between dark and light modes based on browser/os preferences

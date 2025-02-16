@@ -1,6 +1,6 @@
 ---
 weight: 1
 bookFlatSection: true
-bookCollapseSection: true
+bookCollapseSection: false
 title: "Linux Kernel"
 ---

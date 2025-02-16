@@ -1,5 +1,5 @@
 ---
-title: "案例：debuginfo对gdb调试core文件的影响"
+title: "案例: debuginfo对gdb调试core文件的影响"
 weight: 2
 ---
 

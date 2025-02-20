@@ -15,11 +15,11 @@ bookToc: false
 
 - **NT3.0平台稳定性工具开发**
 
-- 针对解析dump环境搭建复杂问题，基于docker+jenkins搭建dump可视化解析平台，支持QNX/Android的Ramdump, Coredump与minidump解析。有效提升内部研发团队分析问题效率。
-- 开发crash-utility插件[crash-qcom-ipclog](https://github.com/wonderzyp/crash-qcom-ipclog)，支持解析出高通ipclog。
-- 开发[TZ log解析工具](https://github.com/wonderzyp/dump_tzlog)，支持Ramdump/Minidump的tz log解析。
-- 开发QNX Ramdump提取Android Guestdump工具：[ramdump2gcore](https://github.com/wonderzyp/ramdump2gcore)
-- 针对crash-utility在KASAN版本下崩溃问题，提出patch并合入社区主线。
+    - 针对解析dump环境搭建复杂问题，基于docker+jenkins搭建dump可视化解析平台，支持QNX/Android的Ramdump, Coredump与minidump解析。有效提升内部研发团队分析问题效率。
+    - 开发crash-utility插件[crash-qcom-ipclog](https://github.com/wonderzyp/crash-qcom-ipclog)，支持解析出高通ipclog。
+    - 开发[TZ log解析工具](https://github.com/wonderzyp/dump_tzlog)，支持Ramdump/Minidump的tz log解析。
+    - 开发QNX Ramdump提取Android Guestdump工具：[ramdump2gcore](https://github.com/wonderzyp/ramdump2gcore)
+    - 针对crash-utility在KASAN版本下崩溃问题，提出patch并合入社区主线。
 
 - **NT3.0平台稳定性问题分析**
 

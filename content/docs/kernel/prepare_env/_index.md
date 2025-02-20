@@ -1,6 +1,6 @@
 ---
 weight: 1
-bookCollapseSection: true
+bookCollapseSection: false
 bookToc: false
 title: "内核调试环境准备"
 ---

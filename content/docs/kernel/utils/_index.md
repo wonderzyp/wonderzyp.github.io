@@ -1,6 +1,6 @@
 ---
 weight: 3
-bookCollapseSection: true
+bookCollapseSection: false
 bookToc: false
 title: "Kernel Utils"
 ---

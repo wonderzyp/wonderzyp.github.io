@@ -1,6 +1,6 @@
 ---
 weight: 2
-bookCollapseSection: true
+bookCollapseSection: false
 bookToc: false
 title: "Linux Subsystem"
 ---

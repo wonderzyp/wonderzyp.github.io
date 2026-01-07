@@ -152,6 +152,7 @@ nav:
     - algorithm/index.md
   - Misc:
     - misc/index.md
+    - misc/uefi_bootloader_demo.md
     - misc/crash_1.md
     - misc/crash_parse_func_args.md
     - misc/debug_info.md
